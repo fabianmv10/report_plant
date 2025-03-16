@@ -39,14 +39,14 @@ class _NewReportScreenState extends State<NewReportScreen> {
     }
   } 
 
-  final List<String> _operators = [
+  final List<String> _leader = [
   'Andres Caballero',
   'Cesar Lopez',
   'Evelyn Meneses',
   'Faber Moncayo',
   'Lady Martinez',
   ];
-  String _selectedOperator = 'Andres Caballero';
+  String _selectedLeader = 'Andres Caballero';
 
   List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     // Aquí puedes definir parámetros específicos para cada planta
@@ -261,7 +261,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
                                   style: TextStyle(
                                       fontSize: 20, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
-                              _buildOperatorField(),
+                              _buildLeaderField(),
                               const SizedBox(height: 16),
                               _buildShiftDropdown(),
                             ],
@@ -323,7 +323,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
       const Text('Información del Turno',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 16),
-      _buildOperatorField(),
+      _buildLeaderField(),
       const SizedBox(height: 16),
       _buildShiftDropdown(),
       const SizedBox(height: 24),
@@ -339,19 +339,19 @@ class _NewReportScreenState extends State<NewReportScreen> {
     ];
   }
 
-  Widget _buildOperatorField() {
+  Widget _buildLeaderField() {
     return DropdownButtonFormField<String>(
       decoration: const InputDecoration(
-        labelText: 'Operador',
+        labelText: 'Reportador',
         border: OutlineInputBorder(),
       ),
-      value: _selectedOperator,
+      value: _selectedLeader,
       onChanged: (String? newValue) {
         setState(() {
-          _selectedOperator = newValue!;
+          _selectedLeader = newValue!;
         });
       },
-      items: _operators.map<DropdownMenuItem<String>>((String value) {
+      items: _leader.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -359,7 +359,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
       }).toList(),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Por favor seleccione un operador';
+          return 'Por favor seleccione un lider';
         }
         return null;
       },
@@ -488,6 +488,9 @@ class _NewReportScreenState extends State<NewReportScreen> {
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
+      // Eliminar las novedades del mapa de datos para evitar duplicación
+      _reportData.remove('novedades');
       
       // Verificar que todos los parámetros necesarios estén presentes
       bool allParamsPresent = true;
@@ -514,7 +517,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
         final newReport = Report(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           timestamp: DateTime.now(),
-          operator: _selectedOperator,
+          leader: _selectedLeader,
           shift: _selectedShift,
           plant: widget.plant,
           data: _reportData,

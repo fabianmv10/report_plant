@@ -54,7 +54,7 @@ class DatabaseHelper {
     CREATE TABLE reports(
       id TEXT PRIMARY KEY,
       timestamp INTEGER NOT NULL,
-      operator TEXT NOT NULL,
+      leader TEXT NOT NULL,
       shift TEXT NOT NULL,
       plant_id TEXT NOT NULL,
       data TEXT NOT NULL,
@@ -103,7 +103,7 @@ class DatabaseHelper {
       final reportMap = {
         'id': report.id,
         'timestamp': report.timestamp.millisecondsSinceEpoch,
-        'operator': report.operator,
+        'leader': report.leader,
         'shift': report.shift,
         'plant_id': report.plant.id,
         'data': jsonEncode(report.data),
@@ -141,7 +141,7 @@ class DatabaseHelper {
       return Report(
         id: json['id'] as String,
         timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-        operator: json['operator'] as String,
+        leader: json['leader'] as String,
         shift: json['shift'] as String,
         plant: plant,
         data: jsonDecode(json['data'] as String),
@@ -174,7 +174,7 @@ class DatabaseHelper {
       return Report(
         id: json['id'] as String,
         timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-        operator: json['operator'] as String,
+        leader: json['leader'] as String,
         shift: json['shift'] as String,
         plant: plant,
         data: jsonDecode(json['data'] as String),
@@ -190,7 +190,7 @@ class DatabaseHelper {
       'reports',
       {
         'timestamp': report.timestamp.millisecondsSinceEpoch,
-        'operator': report.operator,
+        'leader': report.leader,
         'shift': report.shift,
         'plant_id': report.plant.id,
         'data': jsonEncode(report.data),

@@ -13,7 +13,7 @@ class ExportService {
     
     // Crear encabezados
     List<List<dynamic>> rows = [
-      ['ID', 'Fecha', 'Operador', 'Turno', 'Planta', 'Datos', 'Novedades']
+      ['ID', 'Fecha', 'Reportado por', 'Turno', 'Planta', 'Datos', 'Novedades']
     ];
     
     // Agregar datos
@@ -21,7 +21,7 @@ class ExportService {
       rows.add([
         report.id,
         report.timestamp.toIso8601String(),
-        report.operator,
+        report.leader,
         report.shift,
         report.plant.name,
         jsonEncode(report.data),
@@ -30,13 +30,24 @@ class ExportService {
     }
     
     // Convertir a CSV
-    String csv = const ListToCsvConverter().convert(rows);
+    String csv = const ListToCsvConverter(
+      fieldDelimiter: ',',
+      textDelimiter: '"',
+      textEndDelimiter: '"',
+      eol: '\n',
+    ).convert(rows);
+
+    // Añadir BOM (Byte Order Mark) para indicar que el archivo está en UTF-8
+    final bom = utf8.encode('\uFEFF');
     
     // Guardar archivo
     final directory = await getExternalStorageDirectory();
     final path = '${directory?.path}/reportes_turno.csv';
     final file = File(path);
-    await file.writeAsString(csv);
+
+    // Escribir BOM seguido del contenido
+    final completeData = [...bom, ...utf8.encode(csv)];
+    await file.writeAsBytes(completeData);
     
     // Compartir archivo
     await Share.shareXFiles([XFile(path)], text: 'Reportes de Turno');

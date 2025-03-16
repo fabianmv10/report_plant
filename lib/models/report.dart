@@ -11,7 +11,7 @@ class Plant {
 class Report {
   final String id;
   final DateTime timestamp;
-  final String operator;
+  final String leader;
   final String shift;
   final Plant plant;
   final Map<String, dynamic> data;
@@ -20,7 +20,7 @@ class Report {
   Report({
     required this.id,
     required this.timestamp, 
-    required this.operator, 
+    required this.leader, 
     required this.shift,
     required this.plant,
     required this.data,
@@ -31,7 +31,7 @@ class Report {
   Map<String, dynamic> toJson() => {
     'id': id,
     'timestamp': timestamp.millisecondsSinceEpoch,
-    'operator': operator,
+    'leader': leader,
     'shift': shift,
     'plant_id': plant.id,
     'data': data,
@@ -43,7 +43,7 @@ class Report {
     return Report(
       id: json['id'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
-      operator: json['operator'],
+      leader: json['leader'],
       shift: json['shift'],
       plant: plant,
       data: json['data'],
