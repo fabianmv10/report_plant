@@ -22,7 +22,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
   Widget build(BuildContext context) {
 
     // En el método build o initState de ReportListScreen
-    Future<void> _loadReports() async {
+    Future<void> loadReports() async {
       final reports = await DatabaseHelper.instance.getAllReports();
       setState(() {
         _reports = reports;

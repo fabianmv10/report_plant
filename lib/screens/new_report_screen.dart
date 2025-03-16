@@ -277,7 +277,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
                               style: TextStyle(
                                   fontSize: 20, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
-                          ..._parameters.map(_buildParameterField).toList(),
+                          ..._parameters.map(_buildParameterField),
                         ],
                       ),
                     ),
@@ -309,7 +309,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
       const Text('Datos del Proceso',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 16),
-      ..._parameters.map(_buildParameterField).toList(),
+      ..._parameters.map(_buildParameterField),
       const SizedBox(height: 24),
       const Text('Novedades del Turno',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

@@ -20,7 +20,7 @@ class PlantSelectionScreen extends StatelessWidget {
       Plant(id: '9', name: 'Llenados')
     ];
 
-    Future<List<Plant>> _getPlants() async {
+    Future<List<Plant>> getPlants() async {
       return await DatabaseHelper.instance.getAllPlants();
     }
 
