@@ -6,7 +6,7 @@ import '../widgets/responsive_layout.dart';
 class NewReportScreen extends StatefulWidget {
   final Plant plant;
   
-  const NewReportScreen({Key? key, required this.plant}) : super(key: key);
+  const NewReportScreen({super.key, required this.plant});
 
   @override
   State<NewReportScreen> createState() => _NewReportScreenState();

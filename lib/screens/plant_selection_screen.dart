@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/report.dart';
+import '../services/database_helper.dart';
 
 class PlantSelectionScreen extends StatelessWidget {
   const PlantSelectionScreen({super.key});
@@ -18,6 +19,10 @@ class PlantSelectionScreen extends StatelessWidget {
       Plant(id: '8', name: 'Polímeros Aniónicos'),
       Plant(id: '9', name: 'Llenados')
     ];
+
+    Future<List<Plant>> _getPlants() async {
+      return await DatabaseHelper.instance.getAllPlants();
+    }
 
     return Scaffold(
       appBar: AppBar(
