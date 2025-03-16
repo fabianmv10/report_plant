@@ -16,19 +16,27 @@ class DatabaseHelper {
     return _database!;
   }
 
+  // En database_helper.dart, modifica _initDB
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
     print("Creando base de datos en: $path");
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) {
-        print("Creando tablas de la base de datos");
-        _createDB(db, version);
-      },
-    );
+    try {
+      return await openDatabase(
+        path,
+        version: 1,
+        onCreate: (db, version) {
+          print("Creando tablas de la base de datos");
+          _createDB(db, version);
+        },
+      );
+    } catch (e) {
+      print("Error al crear la base de datos: $e");
+      // Puede ser necesario eliminar el archivo de la base de datos si está corrupto
+      // await deleteDatabase(path);
+      rethrow;
+    }
   }
 
   Future _createDB(Database db, int version) async {

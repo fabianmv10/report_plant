@@ -5,8 +5,13 @@ import 'screens/new_report_screen.dart';
 import 'screens/plant_selection_screen.dart';
 import 'services/database_helper.dart';
 
-void main() {
+void main() async {
+
+  WidgetsFlutterBinding.ensureInitialized(); // Necesario para operaciones asíncronas en main
+  final MyApp app = MyApp();
+  await app._initializeDefaultPlants();
   runApp(const MyApp());
+  
 }
 
 class MyApp extends StatelessWidget {

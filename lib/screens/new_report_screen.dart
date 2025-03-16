@@ -26,7 +26,18 @@ class _NewReportScreenState extends State<NewReportScreen> {
     super.initState();
     // Parámetros específicos según la planta seleccionada
     _parameters = _getPlantParameters(widget.plant.id);
-  }
+     // Inicializar los valores por defecto para todos los parámetros
+    for (var param in _parameters) {
+      final String fieldId = param['name'].toString().toLowerCase().replaceAll(' ', '_');
+      if (param['type'] == 'dropdown') {
+        // Para dropdowns, usar el primer valor como default
+        _reportData[fieldId] = param['options'][0];
+      } else if (param.containsKey('min')) {
+        // Para campos numéricos, usar el valor mínimo como default
+        _reportData[fieldId] = param['min'];
+      }
+    }
+  } 
 
   final List<String> _operators = [
   'Andres Caballero',
@@ -168,6 +179,16 @@ class _NewReportScreenState extends State<NewReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    for (var param in _parameters) {
+      if (param['type'] == 'dropdown') {
+        final String fieldId = param['name'].toString().toLowerCase().replaceAll(' ', '_');
+        if (!_reportData.containsKey(fieldId) || 
+            !param['options'].contains(_reportData[fieldId])) {
+          // Si el valor actual no es válido, asignar el primer valor por defecto
+          _reportData[fieldId] = param['options'][0];
+        }
+      }
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text('Nuevo Reporte - ${widget.plant.name}'),
@@ -390,7 +411,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
                     child: Text(option),
                   );
                 }).toList(),
-                value: parameter['options'][0],
+                value: _reportData[fieldId] ?? parameter['options'][0],
                 onChanged: (String? value) {
                   setState(() {
                     _reportData[fieldId] = value;
@@ -401,9 +422,6 @@ class _NewReportScreenState extends State<NewReportScreen> {
                     return 'Por favor seleccione una opción';
                   }
                   return null;
-                },
-                onSaved: (value) {
-                  _reportData[fieldId] = value;
                 },
               ),
             ),
@@ -471,26 +489,57 @@ class _NewReportScreenState extends State<NewReportScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       
-      // Crear nuevo reporte
-      final newReport = Report(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        timestamp: DateTime.now(),
-        operator: _selectedOperator,
-        shift: _selectedShift,
-        plant: widget.plant,
-        data: _reportData,
-        notes: _notesController.text,
-      );
+      // Verificar que todos los parámetros necesarios estén presentes
+      bool allParamsPresent = true;
+      for (var param in _parameters) {
+        final String fieldId = param['name'].toString().toLowerCase().replaceAll(' ', '_');
+        if (!_reportData.containsKey(fieldId) || _reportData[fieldId] == null) {
+          allParamsPresent = false;
+          print("Falta el parámetro: ${param['name']}");
+        }
+      }
       
-      // Guardar en la base de datos
-      await DatabaseHelper.instance.insertReport(newReport);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reporte guardado correctamente')),
-      );
-      
-      Navigator.pop(context);
-      Navigator.pop(context); // Volver a la pantalla principal
+      if (!allParamsPresent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Faltan datos en el formulario')),
+        );
+        return;
+      }
+
+      // En _submitForm() antes de crear el reporte
+      print("Datos del formulario: $_reportData");
+
+      try {
+        // Crear nuevo reporte
+        final newReport = Report(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          timestamp: DateTime.now(),
+          operator: _selectedOperator,
+          shift: _selectedShift,
+          plant: widget.plant,
+          data: _reportData,
+          notes: _notesController.text,
+        );
+        
+        // Guardar en la base de datos
+        final result = await DatabaseHelper.instance.insertReport(newReport);
+        
+        if (result > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Reporte guardado correctamente')),
+          );
+          
+          Navigator.pop(context);
+          Navigator.pop(context); // Volver a la pantalla principal
+        } else {
+          throw Exception("No se pudo guardar el reporte");
+        }
+      } catch (e) {
+        print("Error al guardar el reporte: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar: ${e.toString()}')),
+        );
+      }
     }
   }
 }
