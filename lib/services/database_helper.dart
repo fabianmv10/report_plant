@@ -19,11 +19,15 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    print("Creando base de datos en: $path");
 
     return await openDatabase(
       path,
       version: 1,
-      onCreate: _createDB,
+      onCreate: (db, version) {
+        print("Creando tablas de la base de datos");
+        _createDB(db, version);
+      },
     );
   }
 
@@ -73,21 +77,32 @@ class DatabaseHelper {
 
   // Métodos para reportes
   Future<int> insertReport(Report report) async {
-    final db = await instance.database;
-    
-    // Asegurarse que la planta existe
-    await insertPlant(report.plant);
-    
-    return await db.insert('reports', {
-      'id': report.id,
-      'timestamp': report.timestamp.millisecondsSinceEpoch,
-      'operator': report.operator,
-      'shift': report.shift,
-      'plant_id': report.plant.id,
-      'data': jsonEncode(report.data),
-      'notes': report.notes,
-    });
+    try {
+      final db = await instance.database;
+      
+      // Asegurarse que la planta existe
+      await insertPlant(report.plant);
+      
+      final reportMap = {
+        'id': report.id,
+        'timestamp': report.timestamp.millisecondsSinceEpoch,
+        'operator': report.operator,
+        'shift': report.shift,
+        'plant_id': report.plant.id,
+        'data': jsonEncode(report.data),
+        'notes': report.notes,
+      };
+      
+      print("Insertando reporte: $reportMap");
+      return await db.insert('reports', reportMap);
+    } catch (e) {
+      print("Error insertando reporte: $e");
+      return -1;
+    }
   }
+  
+
+    
 
   Future<List<Report>> getAllReports() async {
     final db = await instance.database;
@@ -173,6 +188,12 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // Añade esto al DatabaseHelper para depurar
+  Future<void> logDatabasePath() async {
+    final dbPath = await getDatabasesPath();
+    print("Database path: $dbPath");
   }
 
   Future close() async {
