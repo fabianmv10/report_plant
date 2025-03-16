@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/report.dart';
+import '../services/database_helper.dart';
 import '../widgets/responsive_layout.dart';
 
 class NewReportScreen extends StatefulWidget {
@@ -466,11 +467,11 @@ class _NewReportScreenState extends State<NewReportScreen> {
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       
-      // Crear nuevo reporte con la planta seleccionada
+      // Crear nuevo reporte
       final newReport = Report(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         timestamp: DateTime.now(),
@@ -481,7 +482,8 @@ class _NewReportScreenState extends State<NewReportScreen> {
         notes: _notesController.text,
       );
       
-      // Aquí guardaríamos el reporte (lo haremos más adelante)
+      // Guardar en la base de datos
+      await DatabaseHelper.instance.insertReport(newReport);
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Reporte guardado correctamente')),

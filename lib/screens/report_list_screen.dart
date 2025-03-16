@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/report.dart';
+import '../services/database_helper.dart';
 import '../widgets/responsive_layout.dart';
 import 'package:intl/intl.dart';
 
@@ -12,15 +13,21 @@ class ReportListScreen extends StatefulWidget {
 
 class _ReportListScreenState extends State<ReportListScreen> {
   // Datos de ejemplo (después serán reemplazados por datos reales)
-  final List<Report> _reports = [
-    
-  ];
-
+  List<Report> _reports = [];
   String _filterShift = 'Todos';
   final List<String> _shiftOptions = ['Todos', 'Mañana', 'Tarde', 'Noche'];
 
   @override
   Widget build(BuildContext context) {
+
+    // En el método build o initState de ReportListScreen
+    Future<void> _loadReports() async {
+      final reports = await DatabaseHelper.instance.getAllReports();
+      setState(() {
+        _reports = reports;
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reportes de Turno'),
