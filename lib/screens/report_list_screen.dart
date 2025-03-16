@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/report.dart';
 import '../services/database_helper.dart';
+import '../services/export_service.dart';
 import '../widgets/responsive_layout.dart';
 import 'package:intl/intl.dart';
 
@@ -31,6 +32,40 @@ class _ReportListScreenState extends State<ReportListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reportes de Turno'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Exportar Datos'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.table_chart),
+                        title: const Text('Exportar como CSV'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ExportService.exportReportsToCSV();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.code),
+                        title: const Text('Exportar como JSON'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ExportService.exportReportsToJSON();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: ResponsiveLayout(
         mobileLayout: _buildMobileLayout(),
@@ -38,6 +73,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
       ),
     );
   }
+   
 
   Widget _buildMobileLayout() {
     return Column(

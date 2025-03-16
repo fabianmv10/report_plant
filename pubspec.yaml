@@ -39,6 +39,8 @@ dependencies:
   sqflite: ^2.3.0  # API de SQLite para Flutter
   path_provider: ^2.1.1  # Para encontrar ubicaciones de almacenamiento
   path: ^1.8.3  # Para manipulación de rutas
+  share_plus: ^7.2.1
+  csv: ^5.1.1
 
 dev_dependencies:
   flutter_test:
