@@ -19,6 +19,26 @@ class _ReportListScreenState extends State<ReportListScreen> {
   final List<String> _shiftOptions = ['Todos', 'Mañana', 'Tarde', 'Noche'];
 
   @override
+  void initState() {
+    super.initState();
+    // Cargar los reportes cuando se inicia la pantalla
+    _loadReports();
+  }
+
+  // Método para cargar los reportes desde la base de datos
+  Future<void> _loadReports() async {
+    try {
+      final reports = await DatabaseHelper.instance.getAllReports();
+      setState(() {
+        _reports = reports;
+      });
+      print("Reportes cargados: ${reports.length}");
+    } catch (e) {
+      print("Error al cargar reportes: $e");
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     // En el método build o initState de ReportListScreen
@@ -29,7 +49,21 @@ class _ReportListScreenState extends State<ReportListScreen> {
       });
     }
 
+    // Filtrar reportes según el turno seleccionado
+    List<Report> filteredReports = _filterShift == 'Todos'
+        ? _reports
+        : _reports.where((report) => report.shift == _filterShift).toList();
+
     return Scaffold(
+      
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // Navegar a la selección de planta y luego regresar para refrescar
+          await Navigator.pushNamed(context, '/plant_selection');
+          _loadReports(); // Refrescar la lista después de regresar
+        },
+        child: const Icon(Icons.add),
+      ),
       appBar: AppBar(
         title: const Text('Reportes de Turno'),
         actions: [
@@ -68,14 +102,14 @@ class _ReportListScreenState extends State<ReportListScreen> {
         ],
       ),
       body: ResponsiveLayout(
-        mobileLayout: _buildMobileLayout(),
-        tabletLayout: _buildTabletLayout(),
+        mobileLayout: _buildMobileLayout(filteredReports),
+        tabletLayout: _buildTabletLayout(filteredReports),
       ),
     );
   }
    
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(List<Report> reports) {
     return Column(
       children: [
         _buildFilters(),
@@ -83,9 +117,9 @@ class _ReportListScreenState extends State<ReportListScreen> {
           child: _reports.isEmpty
               ? const Center(child: Text('No hay reportes disponibles'))
               : ListView.builder(
-                  itemCount: _reports.length,
+                  itemCount: reports.length,
                   itemBuilder: (context, index) {
-                    return _buildReportListItem(_reports[index]);
+                    return _buildReportListItem(reports[index]);
                   },
                 ),
         ),
@@ -93,7 +127,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
     );
   }
 
-  Widget _buildTabletLayout() {
+  Widget _buildTabletLayout(List<Report> reports) {
     return Row(
       children: [
         // Panel lateral con filtros
@@ -121,7 +155,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
         ),
         // Lista de reportes
         Expanded(
-          child: _reports.isEmpty
+          child: reports.isEmpty
               ? const Center(child: Text('No hay reportes disponibles'))
               : GridView.builder(
                   padding: const EdgeInsets.all(16.0),
@@ -131,9 +165,9 @@ class _ReportListScreenState extends State<ReportListScreen> {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
-                  itemCount: _reports.length,
+                  itemCount: reports.length,
                   itemBuilder: (context, index) {
-                    return _buildReportGridItem(_reports[index]);
+                    return _buildReportGridItem(reports[index]);
                   },
                 ),
         ),

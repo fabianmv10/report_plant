@@ -77,7 +77,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
       case '4': // Bisulfito de Sodio
         return [
           {'name': 'Estado Producción', 'type': 'dropdown', 'options': ['Sin Producción', 'Preparación','Reacción','Trasiego']},
-          {'name': 'Cantidad Trasiego', 'unit': 'Kg', 'min': 9000, 'max': 14000},
+          {'name': 'Cantidad Trasiego', 'unit': 'Kg', 'min': 0, 'max': 14000},
           {'name': 'pH Concentrador 1', 'unit': '', 'min': 4, 'max': 11},
           {'name': 'Densidad Concentrador 1', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
           {'name': 'pH Concentrador 2', 'unit': '', 'min': 4, 'max': 11},

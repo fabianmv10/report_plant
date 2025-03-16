@@ -8,11 +8,11 @@ import 'services/database_helper.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized(); // Necesario para operaciones asíncronas en main
-  final MyApp app = MyApp();
+  final app = MyApp();
   await app._initializeDefaultPlants();
-  runApp(const MyApp());
+  runApp(app);
   
-}
+} 
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -20,18 +20,25 @@ class MyApp extends StatelessWidget {
   Future<void> _initializeDefaultPlants() async {
   final plants = [
     Plant(id: '1', name: 'Sulfato de Aluminio Tipo A'),
-      Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
-      Plant(id: '3', name: 'Banalum'),
-      Plant(id: '4', name: 'Bisulfito de Sodio'),
-      Plant(id: '5', name: 'Silicatos'),
-      Plant(id: '6', name: 'Policloruro de Aluminio'),
-      Plant(id: '7', name: 'Polímeros Catiónicos'),
-      Plant(id: '8', name: 'Polímeros Aniónicos'),
-      Plant(id: '9', name: 'Llenados'),
+    Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
+    Plant(id: '3', name: 'Banalum'),
+    Plant(id: '4', name: 'Bisulfito de Sodio'),
+    Plant(id: '5', name: 'Silicatos'),
+    Plant(id: '6', name: 'Policloruro de Aluminio'),
+    Plant(id: '7', name: 'Polímeros Catiónicos'),
+    Plant(id: '8', name: 'Polímeros Aniónicos'),
+    Plant(id: '9', name: 'Llenados'),
   ];
   
+  // Obtener plantas existentes
+  final existingPlants = await DatabaseHelper.instance.getAllPlants();
+  final existingIds = existingPlants.map((p) => p.id).toSet();
+  
+  // Insertar solo las plantas que no existen
   for (var plant in plants) {
-    await DatabaseHelper.instance.insertPlant(plant);
+    if (!existingIds.contains(plant.id)) {
+      await DatabaseHelper.instance.insertPlant(plant);
+    }
   }
 }
 

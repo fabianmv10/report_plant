@@ -88,8 +88,17 @@ class DatabaseHelper {
     try {
       final db = await instance.database;
       
-      // Asegurarse que la planta existe
-      await insertPlant(report.plant);
+      // En lugar de intentar insertar la planta directamente, verifica primero si existe
+      final List<Map<String, dynamic>> existingPlants = await db.query(
+        'plants',
+        where: 'id = ?',
+        whereArgs: [report.plant.id],
+      );
+      
+      // Si la planta no existe, insértala
+      if (existingPlants.isEmpty) {
+        await insertPlant(report.plant);
+      }
       
       final reportMap = {
         'id': report.id,
@@ -109,19 +118,19 @@ class DatabaseHelper {
     }
   }
   
-
-    
-
   Future<List<Report>> getAllReports() async {
+  try {
     final db = await instance.database;
     
     // Obtener reportes con JOIN a plantas
     final result = await db.rawQuery('''
-    SELECT r.*, p.name as plant_name, p.description as plant_description
+    SELECT r.*, p.name as plant_name
     FROM reports r
     JOIN plants p ON r.plant_id = p.id
     ORDER BY r.timestamp DESC
     ''');
+    
+    print("Reportes encontrados en DB: ${result.length}");
     
     return result.map((json) {
       final plant = Plant(
@@ -139,7 +148,11 @@ class DatabaseHelper {
         notes: json['notes'] as String?,
       );
     }).toList();
+  } catch (e) {
+    print("Error obteniendo reportes: $e");
+    return [];
   }
+}
 
   Future<List<Report>> getReportsByPlant(String plantId) async {
     final db = await instance.database;
