@@ -212,7 +212,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: ListTile(
-        title: Text('Operador: ${report.leader}'),
+        title: Text('Lider: ${report.leader}'),
         subtitle: Text(
             'Turno: ${report.shift} - Fecha: ${formatter.format(report.timestamp)}'),
         trailing: const Icon(Icons.arrow_forward_ios),
@@ -238,7 +238,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              Text('Operador: ${report.leader}'),
+              Text('Lider: ${report.leader}'),
               Text('Turno: ${report.shift}'),
               const Spacer(),
               const Row(
@@ -267,7 +267,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Operador: ${report.leader}'),
+              Text('Lider: ${report.leader}'),
               Text('Turno: ${report.shift}'),
               const Divider(),
               const Text('Parámetros:'),
