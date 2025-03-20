@@ -35,6 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
   }
 
+  // Método optimizado para cargar datos
   Future<void> _loadDashboardData() async {
     setState(() {
       _isLoading = true;
@@ -73,12 +74,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _currentPlantIndex = 0;
       }
     } catch (e) {
-      print('Error cargando datos: $e');
+      _showErrorSnackBar('Error al cargar datos: $e');
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  // Método para mostrar errores de manera centralizada
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red[700],
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -139,12 +152,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Captura una sola planta
   Future<void> _captureSingleDashboard() async {
     try {
       // Capturar el widget como imagen
       RenderRepaintBoundary boundary = 
           _singleDashboardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ui.Image image = await boundary.toImage(pixelRatio: 5.0);
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       
       if (byteData != null) {
@@ -152,105 +166,103 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _shareDashboardImage(pngBytes, 'single');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al exportar: $e')),
-      );
+      _showErrorSnackBar('Error al exportar: $e');
     }
   }
 
+  // Método optimizado para capturar el dashboard consolidado
   Future<void> _captureConsolidatedDashboard() async {
+    if (_reportsByPlant.isEmpty) {
+      _showErrorSnackBar('No hay datos para exportar');
+      return;
+    }
+
+    setState(() {
+      _preparingExport = true;
+    });
+    
     try {
-      // Verificar si hay datos primero
-      if (_reportsByPlant.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay datos para exportar')),
-        );
-        return;
-      }
-
-      // Preparamos la UI para la captura
-      setState(() {
-        _preparingExport = true;
-      });
-      
-      // Crear un contenido temporal para la captura
-      final content = _buildExportContent();
-      final tempKey = GlobalKey();
-
-      // Crear un overlay para renderizar el contenido fuera de la vista
-      final overlayState = Overlay.of(context);
-      final overlayEntry = OverlayEntry(
-        builder: (context) => Positioned(
-          left: -4000, // Fuera de la pantalla
-          child: Material(
-            child: RepaintBoundary(
-              key: tempKey,
-              child: content,
-            ),
-          ),
-        ),
-      );
-
-      // Insertar en el overlay y esperar a que se renderice
-      overlayState.insert(overlayEntry);
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      try {
-        // Intentar capturar la imagen
-        final RenderRepaintBoundary? boundary = 
-            tempKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-        
-        if (boundary == null) {
-          throw Exception('No se pudo obtener el contexto para la captura');
-        }
-        
-        // Mayor valor de pixelRatio para mejorar la nitidez del texto
-        final ui.Image image = await boundary.toImage(pixelRatio: 3.5);
-        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        
-        if (byteData == null) {
-          throw Exception('No se pudieron obtener los datos de la imagen');
-        }
-        
-        // Compartir la imagen
-        final Uint8List pngBytes = byteData.buffer.asUint8List();
-        
-        // Eliminar el overlay antes de continuar
-        overlayEntry.remove();
-        
-        // Compartir la imagen
-        await _shareDashboardImage(pngBytes, 'consolidated');
-      } catch (e) {
-        // Asegurarse de eliminar el overlay en caso de error
-        overlayEntry.remove();
-        throw e;
-      }
+      // Crear escena de captura fuera de pantalla
+      await _captureConsolidatedContent();
     } catch (e) {
-      print('Error en captura: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al exportar: $e')),
-      );
+      _showErrorSnackBar('Error al exportar: $e');
     } finally {
-      // Asegurar que siempre se restablezca el estado
       setState(() {
         _preparingExport = false;
       });
     }
   }
 
-  // Método específico para construir el contenido de exportación
+  // Método separado para la captura de contenido consolidado
+  Future<void> _captureConsolidatedContent() async {
+    final tempKey = GlobalKey();
+    final content = _buildExportContent();
+    
+    // Crear un overlay para renderizar el contenido fuera de la vista
+    final overlayState = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: -4000, // Fuera de la pantalla
+        child: Material(
+          child: RepaintBoundary(
+            key: tempKey,
+            child: content,
+          ),
+        ),
+      ),
+    );
+
+    // Insertar en el overlay y esperar a que se renderice
+    overlayState.insert(overlayEntry);
+    
+    try {
+      // Esperar a que se renderice el contenido
+      await Future.delayed(const Duration(milliseconds: 1500));
+      
+      // Capturar la imagen
+      final RenderRepaintBoundary? boundary = 
+          tempKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      
+      if (boundary == null) {
+        throw Exception('No se pudo obtener el contexto para la captura');
+      }
+      
+      // Mayor valor de pixelRatio para mejorar la nitidez del texto
+      final ui.Image image = await boundary.toImage(pixelRatio: 5.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (byteData == null) {
+        throw Exception('No se pudieron obtener los datos de la imagen');
+      }
+      
+      // Compartir la imagen
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+      await _shareDashboardImage(pngBytes, 'consolidated');
+    } finally {
+      // Asegurarse de eliminar el overlay
+      overlayEntry.remove();
+    }
+  }
+
+  // Widget para construir la vista de exportación
   Widget _buildExportContent() {
-    // Establecer un formato fijo: 4 columnas
-    const int fixedColumns = 4;
+    // Establecer un formato de 3 columnas como solicitado
+    const int fixedColumns = 3;
     
-    // Ancho fijo para cada planta
-    const double plantWidth = 250.0;
+    // Ancho fijo para cada planta (reducido para acomodar 3 columnas)
+    const double plantWidth = 280.0;
     
-    // Ancho total fijo (4 columnas)
-    final double totalWidth = plantWidth * fixedColumns;
+    // Ancho total
+    final double totalWidth = plantWidth * fixedColumns + 48; // Incluir padding
+    
+    // Calcular número de filas necesarias
+    final int totalPlants = _reportsByPlant.length;
+    final int rows = (totalPlants / fixedColumns).ceil();
+    
+    // Convertir el mapa a una lista para facilitar el acceso
+    final plantList = _reportsByPlant.entries.toList();
     
     return Container(
-      // Ancho fijo para 4 columnas
       width: totalWidth,
       color: Colors.white,
       padding: const EdgeInsets.all(16),
@@ -259,110 +271,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Título
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'REPORTE CONSOLIDADO DE PRODUCCIÓN',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Fecha: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
+          _buildExportHeader(),
           const SizedBox(height: 20),
 
-          // Grid fijo de 4 columnas
-          _buildFixedGrid(fixedColumns, plantWidth),
+          // Contenido en filas
+          ...List.generate(rows, (rowIndex) {
+            return Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: List.generate(fixedColumns, (colIndex) {
+                    final int index = rowIndex * fixedColumns + colIndex;
+                    if (index < plantList.length) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          right: colIndex < fixedColumns - 1 ? 8 : 0, // Reducido el padding horizontal
+                          bottom: 16,
+                        ),
+                        child: SizedBox(
+                          width: plantWidth,
+                          child: _buildPlantCard(plantList[index]),
+                        ),
+                      );
+                    } else {
+                      return SizedBox(width: plantWidth);
+                    }
+                  }),
+                ),
+                const SizedBox(height: 8),
+              ],
+            );
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildFixedGrid(int columns, double plantWidth) {
-    List<MapEntry<String, List<Report>>> plants = _reportsByPlant.entries.toList();
-    
-    // Si hay menos de 8 plantas (4x2), rellena con contenedores vacíos
-    while (plants.length < columns * 2) {
-      plants.add(MapEntry("", [])); // Planta vacía
-    }
-    
-    return Column(
-      children: [
-        // Primera fila
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(
-            columns,
-            (index) {
-              if (index < plants.length) {
-                return Container(
-                  width: plantWidth,
-                  margin: EdgeInsets.only(right: index < columns - 1 ? 12 : 0),
-                  child: plants[index].key.isNotEmpty
-                      ? _buildPlantCard(plants[index])
-                      : Container(height: 1), // Contenedor vacío mínimo
-                );
-              } else {
-                return Container(width: plantWidth, height: 1);
-              }
-            },
+  // Widget para el encabezado del reporte exportado
+  Widget _buildExportHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'REPORTE CONSOLIDADO DE PRODUCCIÓN',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // Segunda fila
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(
-            columns,
-            (index) {
-              int actualIndex = index + columns;
-              if (actualIndex < plants.length) {
-                return Container(
-                  width: plantWidth,
-                  margin: EdgeInsets.only(right: index < columns - 1 ? 12 : 0),
-                  child: plants[actualIndex].key.isNotEmpty
-                      ? _buildPlantCard(plants[actualIndex])
-                      : Container(height: 1), // Contenedor vacío mínimo
-                );
-              } else {
-                return Container(width: plantWidth, height: 1);
-              }
-            },
+          const SizedBox(height: 8),
+          Text(
+            'Fecha: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  // El método _buildPlantCard permanece igual que en la versión anterior
+  // Widget mejorado para mostrar la tarjeta de una planta
   Widget _buildPlantCard(MapEntry<String, List<Report>> entry) {
-    if (entry.key.isEmpty) return Container(height: 1); // No mostrar plantas vacías
+    if (entry.key.isEmpty) return Container(height: 1);
     
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(8),
@@ -394,104 +378,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           
           // Turnos para esta planta
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0), // Reducido el padding horizontal
             child: Column(
               children: _shifts.map((shift) {
                 final shiftReports = entry.value.where((r) => r.shift == shift).toList();
                 if (shiftReports.isEmpty) return Container();
                 
-                // Colores para los turnos
-                final shiftColors = {
-                  'Mañana': Colors.amber[700],
-                  'Tarde': Colors.blue[700],
-                  'Noche': Colors.indigo[700],
-                };
-                
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: shiftColors[shift] ?? Colors.grey),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Encabezado del turno
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        color: shiftColors[shift]?.withOpacity(0.2),
-                        child: Text(
-                          'Turno: $shift - Líder: ${shiftReports.first.leader}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: shiftColors[shift],
-                          ),
-                        ),
-                      ),
-                      
-                      // Datos de producción
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Producción:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            // Datos de producción
-                            ...shiftReports.first.data.entries.map((dataEntry) {
-                              // Formatear la clave
-                              final formattedKey = dataEntry.key.split('_')
-                                  .map((word) => word.isNotEmpty 
-                                      ? '${word[0].toUpperCase()}${word.substring(1)}' 
-                                      : '')
-                                  .join(' ');
-                              
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Text(
-                                  '$formattedKey: ${dataEntry.value}',
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                              );
-                            }).toList(),
-                            
-                            // Novedades si existen
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Novedad:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              shiftReports.first.notes != null && shiftReports.first.notes!.isNotEmpty
-                                  ? shiftReports.first.notes!
-                                  : 'SN',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontStyle: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
-                                color: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
-                                    ? Colors.grey
-                                    : Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildShiftCard(shift, shiftReports);
               }).toList(),
             ),
           ),
@@ -500,6 +393,121 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Widget separado para mostrar información de un turno
+  Widget _buildShiftCard(String shift, List<Report> shiftReports) {
+    // Colores para los turnos
+    final shiftColors = {
+      'Mañana': Colors.amber[700],
+      'Tarde': Colors.blue[700],
+      'Noche': Colors.indigo[700],
+    };
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: shiftColors[shift] ?? Colors.grey),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Encabezado del turno
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            color: shiftColors[shift]?.withOpacity(0.2),
+            child: Text(
+              'Turno: $shift',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: shiftColors[shift],
+              ),
+            ),
+          ),
+          
+          // Datos de producción
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Producción:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13, // Reducido para mejor ajuste
+                  ),
+                ),
+                const SizedBox(height: 4),
+                
+                // Datos de producción con mejor formato
+                _buildProductionDataList(shiftReports.first),
+                
+                // Novedades si existen
+                const SizedBox(height: 6),
+                const Text(
+                  'Novedad:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13, // Reducido para mejor ajuste
+                  ),
+                ),
+                Text(
+                  shiftReports.first.notes != null && shiftReports.first.notes!.isNotEmpty
+                      ? shiftReports.first.notes!
+                      : 'SN',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontStyle: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
+                        ? FontStyle.italic
+                        : FontStyle.normal,
+                    color: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
+                        ? Colors.grey
+                        : Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Nuevo widget optimizado para mostrar datos de producción
+  Widget _buildProductionDataList(Report report) {
+    final items = <Widget>[];
+    
+    report.data.forEach((key, value) {
+      // Formatear la clave (eliminar guiones bajos, capitalizar)
+      final formattedKey = key.split('_')
+          .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+          .join(' ');
+      
+      // Formato compacto para valores
+      final formattedValue = value is double ? value.toString() : value.toString();
+      
+      items.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            '$formattedKey: $formattedValue',
+            style: const TextStyle(fontSize: 12), // Tamaño reducido para evitar desbordamiento
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+          ),
+        ),
+      );
+    });
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items,
+    );
+  }
+
+  // Método para compartir imágenes
   Future<void> _shareDashboardImage(Uint8List pngBytes, String type) async {
     try {
       // Guardar temporalmente la imagen
@@ -512,9 +520,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await Share.shareXFiles([XFile(filePath)], 
         text: 'Resumen de producción: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al compartir: $e')),
-      );
+      _showErrorSnackBar('Error al compartir: $e');
     }
   }
 
@@ -547,23 +553,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           
           // Indicador de carga durante la exportación
           if (_preparingExport)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 16),
-                    Text(
-                      'Preparando reporte consolidado...',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildLoadingOverlay(),
         ],
+      ),
+    );
+  }
+
+  // Widget para mostrar el indicador de carga
+  Widget _buildLoadingOverlay() {
+    return Container(
+      color: Colors.black54,
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(height: 16),
+            Text(
+              'Preparando reporte consolidado...',
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -607,6 +618,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
   
+  // Widget para estado vacío
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -628,12 +640,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Crear un reporte'),
+              onPressed: () => Navigator.pushNamed(context, '/plant_selection')
+                  .then((_) => _loadDashboardData()),
+            ),
           ],
         ),
       ),
     );
   }
   
+  // Widget para navegación entre plantas
   Widget _buildPlantNavigation(String plantName) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -663,6 +683,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Widget para mostrar el dashboard detallado de una planta
   Widget _buildDetailedDashboard(String plantName, List<Report> plantReports) {
     // Agrupar reportes por turno
     Map<String, List<Report>> reportsByShift = {};
@@ -723,6 +744,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
   
+  // Widget para mostrar información de un turno
   Widget _buildShiftSection(String shift, List<Report> reports) {
     // Color para cada turno
     final shiftColors = {
@@ -788,6 +810,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
   
+  // Widget para mostrar datos de producción en formato tabla
   Widget _buildProductionData(Report report) {
     // Extraer datos de producción del reporte
     final productionData = <Widget>[];
@@ -805,11 +828,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             children: [
               Expanded(
+                flex: 3,
                 child: Text(formattedKey),
               ),
-              Text(
-                value.toString(),
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  value.toString(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.end,
+                ),
               ),
             ],
           ),
@@ -820,6 +848,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(children: productionData);
   }
 
+  // Widget para mostrar lista de notas
   Widget _buildNotesList(List<Report> reports) {
     // Filtrar reportes que tienen notas
     final reportsWithNotes = reports.where((r) => r.notes != null && r.notes!.isNotEmpty).toList();
