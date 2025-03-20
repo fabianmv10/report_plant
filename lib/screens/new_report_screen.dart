@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/report.dart';
 import '../services/database_helper.dart';
 import '../widgets/responsive_layout.dart';
@@ -18,12 +19,19 @@ class _NewReportScreenState extends State<NewReportScreen> {
   String _selectedShift = 'Mañana';
   final Map<String, dynamic> _reportData = {};
   
+  // Agregar controlador de fecha y fecha seleccionada
+  DateTime _selectedDate = DateTime.now();
+  final TextEditingController _dateController = TextEditingController();
+  
   final List<String> _shifts = ['Mañana', 'Tarde', 'Noche'];
   late List<Map<String, dynamic>> _parameters;
 
   @override
   void initState() {
     super.initState();
+    // Inicializar el controlador de fecha
+    _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+    
     // Parámetros específicos según la planta seleccionada
     _parameters = _getPlantParameters(widget.plant.id);
      // Inicializar los valores por defecto para todos los parámetros
@@ -174,7 +182,25 @@ class _NewReportScreenState extends State<NewReportScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _dateController.dispose();
     super.dispose();
+  }
+  
+  // Función para seleccionar fecha
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+      });
+    }
   }
 
   @override
@@ -261,6 +287,21 @@ class _NewReportScreenState extends State<NewReportScreen> {
                                   style: TextStyle(
                                       fontSize: 20, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
+                              // Campo para seleccionar fecha
+                              TextFormField(
+                                controller: _dateController,
+                                decoration: InputDecoration(
+                                  labelText: 'Fecha',
+                                  border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.calendar_today),
+                                    onPressed: () => _selectDate(context),
+                                  ),
+                                ),
+                                readOnly: true, // No permitir edición manual
+                                onTap: () => _selectDate(context),
+                              ),
+                              const SizedBox(height: 16),
                               _buildLeaderField(),
                               const SizedBox(height: 16),
                               _buildShiftDropdown(),
@@ -323,6 +364,23 @@ class _NewReportScreenState extends State<NewReportScreen> {
       const Text('Información del Turno',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 16),
+      
+      // Campo para seleccionar fecha
+      TextFormField(
+        controller: _dateController,
+        decoration: InputDecoration(
+          labelText: 'Fecha',
+          border: const OutlineInputBorder(),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () => _selectDate(context),
+          ),
+        ),
+        readOnly: true, // No permitir edición manual
+        onTap: () => _selectDate(context),
+      ),
+      const SizedBox(height: 16),
+      
       _buildLeaderField(),
       const SizedBox(height: 16),
       _buildShiftDropdown(),
@@ -513,10 +571,11 @@ class _NewReportScreenState extends State<NewReportScreen> {
       print("Datos del formulario: $_reportData");
 
       try {
-        // Crear nuevo reporte
+        // Crear nuevo reporte con la fecha seleccionada
         final newReport = Report(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          timestamp: DateTime.now(),
+          timestamp: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 
+                    DateTime.now().hour, DateTime.now().minute), // Usar la fecha seleccionada pero con la hora actual
           leader: _selectedLeader,
           shift: _selectedShift,
           plant: widget.plant,

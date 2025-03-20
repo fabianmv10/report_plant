@@ -19,7 +19,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey _singleDashboardKey = GlobalKey();
-  final GlobalKey _consolidatedDashboardKey = GlobalKey();
   bool _isLoading = false;
   bool _preparingExport = false;
   DateTime _selectedDate = DateTime.now();
@@ -161,53 +160,344 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _captureConsolidatedDashboard() async {
     try {
-      // Primero aseguramos que se construya el widget consolidado
+      // Verificar si hay datos primero
+      if (_reportsByPlant.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay datos para exportar')),
+        );
+        return;
+      }
+
+      // Preparamos la UI para la captura
       setState(() {
         _preparingExport = true;
       });
       
-      // Dar tiempo para que el widget se renderice completamente
-      await Future.delayed(const Duration(milliseconds: 1000));
-      
-      // Ahora intentamos capturar la imagen
-      final RenderRepaintBoundary? boundary = 
-          _consolidatedDashboardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      
-      if (boundary == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: No se pudo generar la imagen. Intente nuevamente.')),
-        );
-        setState(() {
-          _preparingExport = false;
-        });
-        return;
+      // Crear un contenido temporal para la captura
+      final content = _buildExportContent();
+      final tempKey = GlobalKey();
+
+      // Crear un overlay para renderizar el contenido fuera de la vista
+      final overlayState = Overlay.of(context);
+      final overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+          left: -4000, // Fuera de la pantalla
+          child: Material(
+            child: RepaintBoundary(
+              key: tempKey,
+              child: content,
+            ),
+          ),
+        ),
+      );
+
+      // Insertar en el overlay y esperar a que se renderice
+      overlayState.insert(overlayEntry);
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      try {
+        // Intentar capturar la imagen
+        final RenderRepaintBoundary? boundary = 
+            tempKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        
+        if (boundary == null) {
+          throw Exception('No se pudo obtener el contexto para la captura');
+        }
+        
+        // Mayor valor de pixelRatio para mejorar la nitidez del texto
+        final ui.Image image = await boundary.toImage(pixelRatio: 3.5);
+        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        
+        if (byteData == null) {
+          throw Exception('No se pudieron obtener los datos de la imagen');
+        }
+        
+        // Compartir la imagen
+        final Uint8List pngBytes = byteData.buffer.asUint8List();
+        
+        // Eliminar el overlay antes de continuar
+        overlayEntry.remove();
+        
+        // Compartir la imagen
+        await _shareDashboardImage(pngBytes, 'consolidated');
+      } catch (e) {
+        // Asegurarse de eliminar el overlay en caso de error
+        overlayEntry.remove();
+        throw e;
       }
-      
-      // Capturar la imagen con una escala adecuada para un buen resultado
-      // Usamos un valor más alto para asegurar que la imagen tenga buena calidad al ser más ancha
-      final ui.Image image = await boundary.toImage(pixelRatio: 2.5);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      
-      if (byteData == null) {
-        throw Exception('No se pudo obtener los datos de la imagen');
-      }
-      
-      Uint8List pngBytes = byteData.buffer.asUint8List();
-      await _shareDashboardImage(pngBytes, 'consolidated');
-      
-      // Restaurar el estado
-      setState(() {
-        _preparingExport = false;
-      });
     } catch (e) {
       print('Error en captura: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al exportar: $e')),
       );
+    } finally {
+      // Asegurar que siempre se restablezca el estado
       setState(() {
         _preparingExport = false;
       });
     }
+  }
+
+  // Método específico para construir el contenido de exportación
+  Widget _buildExportContent() {
+    // Establecer un formato fijo: 4 columnas
+    const int fixedColumns = 4;
+    
+    // Ancho fijo para cada planta
+    const double plantWidth = 250.0;
+    
+    // Ancho total fijo (4 columnas)
+    final double totalWidth = plantWidth * fixedColumns;
+    
+    return Container(
+      // Ancho fijo para 4 columnas
+      width: totalWidth,
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'REPORTE CONSOLIDADO DE PRODUCCIÓN',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Fecha: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Grid fijo de 4 columnas
+          _buildFixedGrid(fixedColumns, plantWidth),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedGrid(int columns, double plantWidth) {
+    List<MapEntry<String, List<Report>>> plants = _reportsByPlant.entries.toList();
+    
+    // Si hay menos de 8 plantas (4x2), rellena con contenedores vacíos
+    while (plants.length < columns * 2) {
+      plants.add(MapEntry("", [])); // Planta vacía
+    }
+    
+    return Column(
+      children: [
+        // Primera fila
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: List.generate(
+            columns,
+            (index) {
+              if (index < plants.length) {
+                return Container(
+                  width: plantWidth,
+                  margin: EdgeInsets.only(right: index < columns - 1 ? 12 : 0),
+                  child: plants[index].key.isNotEmpty
+                      ? _buildPlantCard(plants[index])
+                      : Container(height: 1), // Contenedor vacío mínimo
+                );
+              } else {
+                return Container(width: plantWidth, height: 1);
+              }
+            },
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Segunda fila
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: List.generate(
+            columns,
+            (index) {
+              int actualIndex = index + columns;
+              if (actualIndex < plants.length) {
+                return Container(
+                  width: plantWidth,
+                  margin: EdgeInsets.only(right: index < columns - 1 ? 12 : 0),
+                  child: plants[actualIndex].key.isNotEmpty
+                      ? _buildPlantCard(plants[actualIndex])
+                      : Container(height: 1), // Contenedor vacío mínimo
+                );
+              } else {
+                return Container(width: plantWidth, height: 1);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // El método _buildPlantCard permanece igual que en la versión anterior
+  Widget _buildPlantCard(MapEntry<String, List<Report>> entry) {
+    if (entry.key.isEmpty) return Container(height: 1); // No mostrar plantas vacías
+    
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Encabezado de la planta
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blue[700],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Text(
+              entry.key,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          // Turnos para esta planta
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: _shifts.map((shift) {
+                final shiftReports = entry.value.where((r) => r.shift == shift).toList();
+                if (shiftReports.isEmpty) return Container();
+                
+                // Colores para los turnos
+                final shiftColors = {
+                  'Mañana': Colors.amber[700],
+                  'Tarde': Colors.blue[700],
+                  'Noche': Colors.indigo[700],
+                };
+                
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: shiftColors[shift] ?? Colors.grey),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Encabezado del turno
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        color: shiftColors[shift]?.withOpacity(0.2),
+                        child: Text(
+                          'Turno: $shift - Líder: ${shiftReports.first.leader}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: shiftColors[shift],
+                          ),
+                        ),
+                      ),
+                      
+                      // Datos de producción
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Producción:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Datos de producción
+                            ...shiftReports.first.data.entries.map((dataEntry) {
+                              // Formatear la clave
+                              final formattedKey = dataEntry.key.split('_')
+                                  .map((word) => word.isNotEmpty 
+                                      ? '${word[0].toUpperCase()}${word.substring(1)}' 
+                                      : '')
+                                  .join(' ');
+                              
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Text(
+                                  '$formattedKey: ${dataEntry.value}',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              );
+                            }).toList(),
+                            
+                            // Novedades si existen
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Novedad:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              shiftReports.first.notes != null && shiftReports.first.notes!.isNotEmpty
+                                  ? shiftReports.first.notes!
+                                  : 'SN',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontStyle: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
+                                color: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
+                                    ? Colors.grey
+                                    : Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _shareDashboardImage(Uint8List pngBytes, String type) async {
@@ -255,166 +545,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
               tabletLayout: _buildLayout(),
             ),
           
-          // Dashboard consolidado para captura
+          // Indicador de carga durante la exportación
           if (_preparingExport)
-            // Al exportar, mostramos un indicador de carga encima del contenido
-            Stack(
-              children: [
-                // Widget de exportación visible temporalmente
-                SingleChildScrollView(
-                  child: RepaintBoundary(
-                    key: _consolidatedDashboardKey,
-                    child: Container(
-                      color: Colors.white,
-                      padding: const EdgeInsets.all(16.0),
-                      child: _buildConsolidatedContent(),
-                    ),
-                  ),
-                ),
-                // Indicador semi-transparente encima
-                Container(
-                  color: Colors.black54,
-                  child: const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: Colors.white),
-                        SizedBox(height: 16),
-                        Text(
-                          'Preparando reporte consolidado...',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            // Este container escondido mantiene el widget en el árbol
-            // pero no visible, lo cual es necesario para mantener su contexto
             Container(
-              width: 0,
-              height: 0,
-              child: RepaintBoundary(
-                key: _consolidatedDashboardKey,
-                child: Container(
-                  color: Colors.white,
-                  child: _buildConsolidatedContent(),
+              color: Colors.black54,
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 16),
+                    Text(
+                      'Preparando reporte consolidado...',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
                 ),
               ),
             ),
         ],
       ),
-    );
-  }
-
-  // Método separado para construir el contenido consolidado
-  Widget _buildConsolidatedContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Título
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            children: [
-              const Text(
-                'REPORTE CONSOLIDADO DE PRODUCCIÓN',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Fecha: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Disponer las plantas en filas de dos columnas
-        for (int i = 0; i < _reportsByPlant.length; i += 2) ...[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Primera planta en la fila
-              Expanded(
-                child: _buildPlantColumn(_reportsByPlant.entries.elementAt(i)),
-              ),
-              const SizedBox(width: 8),
-              
-              // Segunda planta en la fila (si existe)
-              if (i + 1 < _reportsByPlant.length)
-                Expanded(
-                  child: _buildPlantColumn(_reportsByPlant.entries.elementAt(i + 1)),
-                )
-              else
-                Expanded(child: Container()), // Espacio vacío si no hay otra planta
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-      ],
-    );
-  }
-
-  // Método para construir una columna de planta individual
-  Widget _buildPlantColumn(MapEntry<String, List<Report>> entry) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Cabecera de la planta
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.blue[700],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            entry.key,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Datos por turnos
-        ..._shifts.map((shift) {
-          final reports = entry.value.where((r) => r.shift == shift).toList();
-          if (reports.isEmpty) return const SizedBox.shrink();
-          
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildShiftSectionForExport(shift, reports),
-              const SizedBox(height: 8),
-            ],
-          );
-        }).toList(),
-        
-        // Novedades
-        _buildNotesListForExport(entry.value),
-      ],
     );
   }
 
@@ -573,49 +723,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
   
-  Widget _buildNotesList(List<Report> reports) {
-    // Filtrar reportes que tienen notas
-    final reportsWithNotes = reports.where((r) => r.notes != null && r.notes!.isNotEmpty).toList();
-    
-    if (reportsWithNotes.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text('No hay novedades reportadas para esta planta'),
-      );
-    }
-    
-    return Column(
-      children: reportsWithNotes.map((report) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            title: Row(
-              children: [
-                Text(
-                  'Turno: ${report.shift}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                Text(
-                  DateFormat('HH:mm').format(report.timestamp),
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(report.notes ?? ''),
-            ),
-            isThreeLine: true,
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildShiftSection(String shift, List<Report> reports) {
     // Color para cada turno
     final shiftColors = {
@@ -680,92 +787,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  // Versión más compacta para la exportación
-  Widget _buildShiftSectionForExport(String shift, List<Report> reports) {
-    final shiftColors = {
-      'Mañana': Colors.amber[700],
-      'Tarde': Colors.blue[700],
-      'Noche': Colors.indigo[700],
-    };
-    
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: shiftColors[shift] ?? Colors.grey,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            color: shiftColors[shift]?.withOpacity(0.3),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Turno: $shift',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: shiftColors[shift]?.withOpacity(1.0),
-                    fontSize: 12,
-                  ),
-                ),
-                Text(
-                  'Líder: ${reports.isNotEmpty ? reports.first.leader : "No asignado"}',
-                  style: TextStyle(
-                    color: shiftColors[shift]?.withOpacity(1.0),
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: reports.isNotEmpty
-                ? _buildCompactProductionData(reports.first)
-                : const Text('No hay datos', style: TextStyle(fontSize: 12)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Versión más compacta para mostrar los datos de producción en columnas
-  Widget _buildCompactProductionData(Report report) {
-    // Extraer datos de producción del reporte
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: report.data.entries.map((entry) {
-        // Formatear el nombre de la clave
-        final formattedKey = entry.key.split('_')
-            .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
-            .join(' ');
-        
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            '$formattedKey: ${entry.value}',
-            style: const TextStyle(fontSize: 11),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
+  
   Widget _buildProductionData(Report report) {
     // Extraer datos de producción del reporte
     final productionData = <Widget>[];
@@ -798,73 +820,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(children: productionData);
   }
 
-  Widget _buildNotesListForExport(List<Report> reports) {
+  Widget _buildNotesList(List<Report> reports) {
     // Filtrar reportes que tienen notas
     final reportsWithNotes = reports.where((r) => r.notes != null && r.notes!.isNotEmpty).toList();
     
     if (reportsWithNotes.isEmpty) {
-      return const SizedBox.shrink();
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text('No hay novedades reportadas para esta planta'),
+      );
     }
     
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
-          color: Colors.grey[300],
-          child: const Text(
-            'Novedades:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+      children: reportsWithNotes.map((report) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            title: Text(
+              'Turno: ${report.shift}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(report.notes ?? ''),
+            ),
+            isThreeLine: true,
           ),
-        ),
-        const SizedBox(height: 4),
-        ...reportsWithNotes.map((report) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      report.shift,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      DateFormat('HH:mm').format(report.timestamp),
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  report.notes ?? '',
-                  style: const TextStyle(fontSize: 10),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ],
+        );
+      }).toList(),
     );
   }
 }
