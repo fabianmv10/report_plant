@@ -27,6 +27,30 @@ class Report {
     this.notes,
   });
 
+  // Método seguro para obtener números del mapa de datos
+  double getNumeric(String key, [double defaultValue = 0.0]) {
+    final value = data[key];
+    if (value == null) return defaultValue;
+    
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (_) {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  }
+  
+  // Método seguro para obtener strings del mapa de datos
+  String getString(String key, [String defaultValue = '']) {
+    final value = data[key];
+    if (value == null) return defaultValue;
+    
+    return value.toString();
+  }
+
   // Convertir reporte a JSON
   Map<String, dynamic> toJson() => {
     'id': id,

@@ -117,42 +117,77 @@ class DatabaseHelper {
       return -1;
     }
   }
-  
+
   Future<List<Report>> getAllReports() async {
-  try {
-    final db = await instance.database;
-    
-    // Obtener reportes con JOIN a plantas
-    final result = await db.rawQuery('''
-    SELECT r.*, p.name as plant_name
-    FROM reports r
-    JOIN plants p ON r.plant_id = p.id
-    ORDER BY r.timestamp DESC
-    ''');
-    
-    print("Reportes encontrados en DB: ${result.length}");
-    
-    return result.map((json) {
-      final plant = Plant(
-        id: json['plant_id'] as String,
-        name: json['plant_name'] as String,
-      );
+    try {
+      final db = await instance.database;
       
-      return Report(
-        id: json['id'] as String,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-        leader: json['leader'] as String,
-        shift: json['shift'] as String,
-        plant: plant,
-        data: jsonDecode(json['data'] as String),
-        notes: json['notes'] as String?,
-      );
-    }).toList();
-  } catch (e) {
-    print("Error obteniendo reportes: $e");
-    return [];
+      // Obtener reportes con JOIN a plantas
+      final result = await db.rawQuery('''
+      SELECT r.*, p.name as plant_name
+      FROM reports r
+      JOIN plants p ON r.plant_id = p.id
+      ORDER BY r.timestamp DESC
+      ''');
+      
+      print("Reportes encontrados en DB: ${result.length}");
+      
+      return result.map((json) {
+        final plant = Plant(
+          id: json['plant_id'] as String,
+          name: json['plant_name'] as String,
+        );
+        
+        // Deserializar los datos con manejo mejorado de tipos
+        Map<String, dynamic> reportData;
+        try {
+          // Intentar parsear el JSON
+          reportData = Map<String, dynamic>.from(jsonDecode(json['data'] as String));
+          
+          // Convertir números en string a tipos numéricos
+          reportData.forEach((key, value) {
+            if (value is String) {
+              // Intentar convertir a número si parece ser numérico
+              try {
+                if (value.contains('.')) {
+                  reportData[key] = double.parse(value);
+                } else {
+                  reportData[key] = int.parse(value);
+                }
+              } catch (_) {
+                // Si falla la conversión, mantener como string
+              }
+            } else if (value == null) {
+              // Reemplazar nulos con valores por defecto según el tipo esperado
+              // Basado en el nombre del campo, podríamos inferir el tipo
+              if (key.contains('cantidad') || 
+                  key.contains('produccion') || 
+                  key.contains('reaccion')) {
+                reportData[key] = 0.0;
+              }
+            }
+          });
+        } catch (e) {
+          // Si hay error al parsear, usar un mapa vacío
+          print("Error deserializando datos de reporte ${json['id']}: $e");
+          reportData = {};
+        }
+        
+        return Report(
+          id: json['id'] as String,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
+          leader: json['leader'] as String,
+          shift: json['shift'] as String,
+          plant: plant,
+          data: reportData,
+          notes: json['notes'] as String?,
+        );
+      }).toList();
+    } catch (e) {
+      print("Error obteniendo reportes: $e");
+      return [];
+    }
   }
-}
 
   Future<List<Report>> getReportsByPlant(String plantId) async {
     final db = await instance.database;

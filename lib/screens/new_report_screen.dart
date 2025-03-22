@@ -488,7 +488,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
       );
     }
     
-    // Para campos numéricos (comportamiento existente)
+    // Para campos numéricos
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -501,7 +501,8 @@ class _NewReportScreenState extends State<NewReportScreen> {
                 border: const OutlineInputBorder(),
                 helperText: 'Rango: ${parameter['min']} - ${parameter['max']}',
               ),
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              initialValue: _reportData[fieldId]?.toString() ?? '', // Inicializar con valor existente o vacío
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Campo requerido';
@@ -517,7 +518,26 @@ class _NewReportScreenState extends State<NewReportScreen> {
                 return null;
               },
               onSaved: (value) {
-                _reportData[fieldId] = double.parse(value!);
+                // Guardar como número, no como string
+                if (value != null && value.isNotEmpty) {
+                  try {
+                    _reportData[fieldId] = double.parse(value);
+                  } catch (e) {
+                    _reportData[fieldId] = 0.0; // Valor por defecto si hay error
+                  }
+                } else {
+                  _reportData[fieldId] = 0.0; // Valor por defecto si está vacío
+                }
+              },
+              onChanged: (value) {
+                // Actualizar el valor en tiempo real
+                if (value.isNotEmpty) {
+                  try {
+                    _reportData[fieldId] = double.parse(value);
+                  } catch (e) {
+                    // No actualizar si hay error de conversión
+                  }
+                }
               },
             ),
           ),
@@ -547,14 +567,41 @@ class _NewReportScreenState extends State<NewReportScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Eliminar las novedades del mapa de datos para evitar duplicación
-      _reportData.remove('novedades');
+      // Procesamiento para asegurar tipos numéricos correctos
+      final Map<String, dynamic> processedData = {};
       
-      // Verificar que todos los parámetros necesarios estén presentes
+      // Asegurar que todos los valores numéricos tengan el formato correcto
+      _reportData.forEach((key, value) {
+        if (value == null) {
+          // Reemplazar nulos con valores predeterminados según el tipo de campo
+          if (key.contains('produccion') || key.contains('reaccion') || 
+              key.contains('cantidad') || key.contains('densidad')) {
+            processedData[key] = 0.0;
+          } else {
+            processedData[key] = '';
+          }
+        } else if (value is String && key != 'referencia') {
+          // Intentar convertir strings a números si no son referencias
+          try {
+            processedData[key] = double.parse(value);
+          } catch (e) {
+            // Si falla la conversión, mantener como string
+            processedData[key] = value;
+          }
+        } else {
+          // Mantener otros valores como están
+          processedData[key] = value;
+        }
+      });
+      
+      // Eliminar las novedades del mapa de datos para evitar duplicación
+      processedData.remove('novedades');
+      
+      // Verificar si tenemos todos los datos requeridos
       bool allParamsPresent = true;
       for (var param in _parameters) {
         final String fieldId = param['name'].toString().toLowerCase().replaceAll(' ', '_');
-        if (!_reportData.containsKey(fieldId) || _reportData[fieldId] == null) {
+        if (!processedData.containsKey(fieldId) || processedData[fieldId] == null) {
           allParamsPresent = false;
           print("Falta el parámetro: ${param['name']}");
         }
@@ -568,7 +615,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
       }
 
       // En _submitForm() antes de crear el reporte
-      print("Datos del formulario: $_reportData");
+      print("Datos procesados del formulario: $processedData");
 
       try {
         // Crear nuevo reporte con la fecha seleccionada
@@ -579,7 +626,7 @@ class _NewReportScreenState extends State<NewReportScreen> {
           leader: _selectedLeader,
           shift: _selectedShift,
           plant: widget.plant,
-          data: _reportData,
+          data: processedData, // Usar los datos procesados
           notes: _notesController.text,
         );
         
@@ -605,3 +652,4 @@ class _NewReportScreenState extends State<NewReportScreen> {
     }
   }
 }
+

@@ -8,6 +8,7 @@ import 'services/database_helper.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized(); // Necesario para operaciones asíncronas en main
+  
   final app = MyApp();
   await app._initializeDefaultPlants();
   runApp(app);
