@@ -75,23 +75,7 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
     }
   }
   
-  // Describe cada planta con un texto informativo
-  String getPlantDescription(String id) {
-    switch (id) {
-      case '1': return 'Planta de producción de sulfato de aluminio tipo A';
-      case '2': return 'Planta de producción de sulfato de aluminio tipo B';
-      case '3': return 'Línea de producción de Banalum';
-      case '4': return 'Producción de bisulfito de sodio';
-      case '5': return 'Producción de silicatos';
-      case '6': return 'Producción de policloruro de aluminio';
-      case '7': return 'Línea de polímeros catiónicos';
-      case '8': return 'Línea de polímeros aniónicos';
-      case '9': return 'Área de llenado y envasado';
-      default: return 'Planta de producción';
-    }
-  }
-
-  @override
+    @override
   Widget build(BuildContext context) {
     // Filtrar plantas según la búsqueda
     final filteredPlants = _searchQuery.isEmpty
@@ -106,27 +90,6 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
       ),
       body: Column(
         children: [
-          // Barra de búsqueda
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar planta...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          
           // Lista de plantas
           Expanded(
             child: _isLoading
@@ -168,33 +131,32 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
   
   Widget _buildPlantGrid(List<Plant> plants) {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(2),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        childAspectRatio: 1.4,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
       ),
       itemCount: plants.length,
       itemBuilder: (context, index) {
         final plant = plants[index];
         final color = getPlantColor(plant.id);
         final icon = getPlantIcon(plant.id);
-        final description = getPlantDescription(plant.id);
         
-        return _buildPlantCard(plant, color, icon, description);
+        return _buildPlantCard(plant, color, icon);
       },
     );
   }
   
-  Widget _buildPlantCard(Plant plant, Color color, IconData icon, String description) {
+  Widget _buildPlantCard(Plant plant, Color color, IconData icon) {
     return Card(
       elevation: 4,
+      clipBehavior: Clip.antiAlias, // Esto asegura que el gradiente no sobresalga de las esquinas
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.pushNamed(
             context, 
@@ -202,84 +164,39 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
             arguments: plant,
           );
         },
-        child: Column(
-          children: [
-            // Cabecera con color e icono
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Center(
-                child: Icon(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withOpacity(0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
                   icon,
-                  size: 48,
+                  size: 32,
                   color: Colors.white,
                 ),
-              ),
-            ),
-            // Contenido
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      plant.name,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    plant.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      description,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: context.textTheme.bodySmall?.color,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Botón
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context, 
-                    '/new_report',
-                    arguments: plant,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 36),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Seleccionar'),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

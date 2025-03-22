@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../theme/theme.dart';
 
 /// Widget personalizado para mostrar tarjetas con estilos consistentes
@@ -179,12 +180,11 @@ class ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftColor = AppTheme.shiftColors[shift] ?? AppTheme.primaryColor;
+    final DateFormat dateFormatter = DateFormat('dd-MM-yy');
     
     return CustomCard(
       accentColor: shiftColor,
-      icon: Icons.assignment,
       title: title,
-      subtitle: 'Turno: $shift',
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,14 +193,21 @@ class ReportCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Líder: $leader',
+                shift,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: shiftColor,
+                ),
+              ),
+              Text(
+                leader,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
-                _formatDate(timestamp),
-                style: TextStyle(
-                  color: context.textTheme.bodySmall?.color,
-                  fontSize: 12,
+                dateFormatter.format(timestamp),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -213,22 +220,7 @@ class ReportCard extends StatelessWidget {
       ),
     );
   }
-
   /// Formatea una fecha en formato legible
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays == 0) {
-      return 'Hoy ${_formatTime(date)}';
-    } else if (difference.inDays == 1) {
-      return 'Ayer ${_formatTime(date)}';
-    } else if (difference.inDays < 7) {
-      return '${_getDayName(date.weekday)} ${_formatTime(date)}';
-    } else {
-      return '${date.day}/${date.month}/${date.year} ${_formatTime(date)}';
-    }
-  }
 
   /// Formatea la hora en formato HH:MM
   String _formatTime(DateTime date) {

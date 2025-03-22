@@ -6,14 +6,14 @@ class AppTheme {
   AppTheme._();
 
   // Colores primarios de la aplicación
-  static const Color primaryColor = Color(0xFF0277BD); // Azul industrial
-  static const Color primaryColorLight = Color(0xFF58A5F0);
-  static const Color primaryColorDark = Color(0xFF004C8C);
+  static const Color primaryColor = Color(0xFF00377A); // Azul industrial
+  static const Color primaryColorLight = Color(0xFF1F84FF);
+  static const Color primaryColorDark = Color(0xFF001229);
 
   // Colores secundarios
   static const Color secondaryColor = Color(0xFF26A69A); // Verde agua
-  static const Color secondaryColorLight = Color(0xFF64D8CB);
-  static const Color secondaryColorDark = Color(0xFF00766C);
+  static const Color secondaryColorLight = Color(0xFFADD784);
+  static const Color secondaryColorDark = Color(0xFF3D5C1E);
 
   // Colores de acento y acción
   static const Color accentColor = Color(0xFFFFA000); // Ámbar
@@ -94,12 +94,14 @@ class AppTheme {
     cardColor: cardColor,
     dividerColor: dividerColor,
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryColor,
+      backgroundColor: primaryColorDark,
       elevation: 2,
-      centerTitle: false,
+      centerTitle: true,
+      foregroundColor: Colors.white,
       titleTextStyle: TextStyle(
+        color: Colors.white,
         fontSize: 20,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w900,
       ),
     ),
     cardTheme: CardTheme(
@@ -107,7 +109,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.all(8.0),
+      margin: const EdgeInsets.all(16.0),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(

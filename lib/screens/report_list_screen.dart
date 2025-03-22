@@ -596,6 +596,9 @@ class _ReportListScreenState extends State<ReportListScreen> {
                         setState(() {
                           _filterShift = newValue!;
                         });
+
+                        this.setState(() {
+                        });
                       },
                       items: _shiftOptions.map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
@@ -627,6 +630,10 @@ class _ReportListScreenState extends State<ReportListScreen> {
                       onChanged: (String? newValue) {
                         setState(() {
                           _filterPlant = newValue!;
+                        });
+
+                        this.setState(() {
+                          
                         });
                       },
                       items: _plantOptions.map<DropdownMenuItem<String>>((String value) {
@@ -779,24 +786,6 @@ class _ReportListScreenState extends State<ReportListScreen> {
       leader: report.leader,
       timestamp: report.timestamp,
       onTap: () => _showReportDetails(report),
-      content: report.notes != null && report.notes!.isNotEmpty
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Divider(),
-              Text(
-                'Novedad: ${report.notes}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: context.textTheme.bodyMedium?.color?.withOpacity(0.8),
-                ),
-              ),
-            ],
-          )
-        : null,
     );
   }
 
@@ -851,7 +840,6 @@ class _ReportListScreenState extends State<ReportListScreen> {
   }
 
   void _showReportDetails(Report report) {
-    final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
     final shiftColor = AppTheme.shiftColors[report.shift] ?? Colors.grey[700]!;
     
     showDialog(
@@ -879,13 +867,13 @@ class _ReportListScreenState extends State<ReportListScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Reporte del ${formatter.format(report.timestamp)}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                            report.plant.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -897,24 +885,12 @@ class _ReportListScreenState extends State<ReportListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.factory),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Planta: ${report.plant.name}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         const Icon(Icons.person),
                         const SizedBox(width: 8),
-                        Text('Líder: ${report.leader}'),
+                        Text(report.leader),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -930,11 +906,6 @@ class _ReportListScreenState extends State<ReportListScreen> {
                       horizontalMargin: 0,
                       headingRowHeight: 40,
                       dataRowMinHeight: 40,
-                      border: TableBorder.all(
-                        color: context.theme.dividerColor,
-                        width: 1,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
                       columns: const [
                         DataColumn(
                           label: Text(

@@ -14,7 +14,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reportes de Turno'),
-        elevation: 2,
       ),
       body: ResponsiveLayout(
         mobileLayout: _buildMobileLayout(context),
@@ -71,13 +70,13 @@ class HomeScreen extends StatelessWidget {
       {
         'title': 'Dashboard',
         'icon': Icons.dashboard,
-        'color': AppTheme.accentColor,
+        'color': AppTheme.primaryColorDark,
         'route': 'dashboard',
       },
       {
         'title': 'Configuración',
         'icon': Icons.settings,
-        'color': AppTheme.successColor,
+        'color': AppTheme.secondaryColorDark,
         'route': 'settings',
       },
     ];
@@ -87,9 +86,9 @@ class HomeScreen extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        childAspectRatio: 1.2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        childAspectRatio: 1,
+        crossAxisSpacing: 4,
+        mainAxisSpacing: 4,
       ),
       itemCount: options.length,
       itemBuilder: (context, index) {
@@ -127,7 +126,7 @@ class HomeScreen extends StatelessWidget {
                       option['title'],
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
