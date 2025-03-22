@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'plant_selection_screen.dart';
 import 'report_list_screen.dart';
 import 'settings_screen.dart';
-import 'dashboard_screen.dart'; // Nueva pantalla que crearemos
+import 'dashboard_screen.dart';
 import '../widgets/responsive_layout.dart';
+import '../theme/theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reportes de Turno'),
+        elevation: 2,
       ),
       body: ResponsiveLayout(
         mobileLayout: _buildMobileLayout(context),
@@ -23,15 +25,32 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildMobileLayout(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(AppTheme.mediumSpacing),
       child: _buildNavigationGrid(context, crossAxisCount: 2),
     );
   }
 
   Widget _buildTabletLayout(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: _buildNavigationGrid(context, crossAxisCount: 3),
+      padding: const EdgeInsets.all(AppTheme.largeSpacing),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+              left: AppTheme.mediumSpacing,
+              bottom: AppTheme.mediumSpacing,
+            ),
+            child: Text(
+              'Panel de Control',
+              style: context.textTheme.headlineMedium,
+            ),
+          ),
+          Expanded(
+            child: _buildNavigationGrid(context, crossAxisCount: 3),
+          ),
+        ],
+      ),
     );
   }
 
@@ -40,25 +59,25 @@ class HomeScreen extends StatelessWidget {
       {
         'title': 'Nuevo Reporte',
         'icon': Icons.add_circle,
-        'color': Colors.blue[600]!,
+        'color': AppTheme.primaryColor,
         'route': 'new_report',
       },
       {
         'title': 'Ver Reportes',
         'icon': Icons.list_alt,
-        'color': Colors.green[600]!,
+        'color': AppTheme.secondaryColor,
         'route': 'report_list',
       },
       {
         'title': 'Dashboard',
         'icon': Icons.dashboard,
-        'color': Colors.orange[600]!,
+        'color': AppTheme.accentColor,
         'route': 'dashboard',
       },
       {
         'title': 'Configuración',
         'icon': Icons.settings,
-        'color': Colors.purple[600]!,
+        'color': AppTheme.successColor,
         'route': 'settings',
       },
     ];
@@ -79,14 +98,14 @@ class HomeScreen extends StatelessWidget {
         return Card(
           elevation: 4,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.mediumBorderRadius,
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.mediumBorderRadius,
             onTap: () => _navigateTo(context, option['route']),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppTheme.mediumBorderRadius,
                 gradient: LinearGradient(
                   colors: [option['color'], option['color'].withOpacity(0.7)],
                   begin: Alignment.topLeft,
@@ -94,7 +113,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppTheme.mediumSpacing),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -103,12 +122,12 @@ class HomeScreen extends StatelessWidget {
                       size: 40,
                       color: Colors.white,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTheme.smallSpacing),
                     Text(
                       option['title'],
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),

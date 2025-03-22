@@ -1,4 +1,6 @@
 // lib/services/plant_database_service.dart
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:path/path.dart';

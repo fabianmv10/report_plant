@@ -20,6 +20,7 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    // ignore: avoid_print
     print("Creando base de datos en: $path");
 
     try {
@@ -27,11 +28,13 @@ class DatabaseHelper {
         path,
         version: 1,
         onCreate: (db, version) {
+          // ignore: avoid_print
           print("Creando tablas de la base de datos");
           _createDB(db, version);
         },
       );
     } catch (e) {
+      // ignore: avoid_print
       print("Error al crear la base de datos: $e");
       // Puede ser necesario eliminar el archivo de la base de datos si está corrupto
       // await deleteDatabase(path);
@@ -110,9 +113,11 @@ class DatabaseHelper {
         'notes': report.notes,
       };
       
+      // ignore: avoid_print
       print("Insertando reporte: $reportMap");
       return await db.insert('reports', reportMap);
     } catch (e) {
+      // ignore: avoid_print
       print("Error insertando reporte: $e");
       return -1;
     }
@@ -130,6 +135,7 @@ class DatabaseHelper {
       ORDER BY r.timestamp DESC
       ''');
       
+      // ignore: avoid_print
       print("Reportes encontrados en DB: ${result.length}");
       
       return result.map((json) {
@@ -169,6 +175,7 @@ class DatabaseHelper {
           });
         } catch (e) {
           // Si hay error al parsear, usar un mapa vacío
+          // ignore: avoid_print
           print("Error deserializando datos de reporte ${json['id']}: $e");
           reportData = {};
         }
@@ -184,6 +191,7 @@ class DatabaseHelper {
         );
       }).toList();
     } catch (e) {
+      // ignore: avoid_print
       print("Error obteniendo reportes: $e");
       return [];
     }
@@ -249,6 +257,7 @@ class DatabaseHelper {
   // Añade esto al DatabaseHelper para depurar
   Future<void> logDatabasePath() async {
     final dbPath = await getDatabasesPath();
+    // ignore: avoid_print
     print("Database path: $dbPath");
   }
 
