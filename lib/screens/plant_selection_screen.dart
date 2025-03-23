@@ -13,7 +13,7 @@ class PlantSelectionScreen extends StatefulWidget {
 class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
   bool _isLoading = true;
   List<Plant> _plants = [];
-  String _searchQuery = '';
+  final String _searchQuery = '';
   
   @override
   void initState() {

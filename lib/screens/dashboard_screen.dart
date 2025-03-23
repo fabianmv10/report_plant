@@ -9,8 +9,6 @@ import 'dart:io';
 import '../models/report.dart';
 import '../services/database_helper.dart';
 import '../widgets/responsive_layout.dart';
-import '../widgets/custom_card.dart';
-import '../theme/theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,7 +17,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey _singleDashboardKey = GlobalKey();
   bool _isLoading = false;
   bool _preparingExport = false;
@@ -30,22 +28,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   
   // Para navegación entre plantas
   int _currentPlantIndex = 0;
-  
-  // Para las animaciones de pestaña
-  late TabController _tabController;
-  final List<String> _tabTitles = ['Producción', 'Turnos', 'Novedades'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _loadDashboardData();
-  }
-  
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   // Método optimizado para cargar datos
@@ -101,10 +88,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppTheme.errorColor,
+        backgroundColor: Colors.red[700],
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -115,19 +100,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: context.theme.copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppTheme.primaryColor,
-              onPrimary: Colors.white,
-              surface: context.theme.cardColor,
-              onSurface: context.textTheme.bodyLarge!.color!,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     
     if (picked != null && picked != _selectedDate) {
@@ -143,7 +115,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       setState(() {
         _currentPlantIndex = (_currentPlantIndex + 1) % _reportsByPlant.length;
       });
-      _tabController.animateTo(0); // Resetear a la primera pestaña al cambiar de planta
     }
   }
 
@@ -152,7 +123,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       setState(() {
         _currentPlantIndex = (_currentPlantIndex - 1 + _reportsByPlant.length) % _reportsByPlant.length;
       });
-      _tabController.animateTo(0); // Resetear a la primera pestaña al cambiar de planta
     }
   }
 
@@ -343,7 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
+        color: Colors.blue,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -388,9 +358,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: Colors.blue[700],
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
               ),
@@ -425,13 +395,17 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   // Widget separado para mostrar información de un turno
   Widget _buildShiftCard(String shift, List<Report> shiftReports) {
-    // Usar colores del tema para los turnos
-    final shiftColor = AppTheme.shiftColors[shift] ?? Colors.grey[700]!;
+    // Colores para los turnos
+    final shiftColors = {
+      'Mañana': Colors.amber[700],
+      'Tarde': Colors.blue[700],
+      'Noche': Colors.indigo[700],
+    };
     
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        border: Border.all(color: shiftColor),
+        border: Border.all(color: shiftColors[shift] ?? Colors.grey),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
@@ -441,13 +415,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            color: shiftColor.withOpacity(0.2),
+            color: shiftColors[shift]?.withOpacity(0.2),
             child: Text(
               'Turno: $shift',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: shiftColor,
+                color: shiftColors[shift],
               ),
             ),
           ),
@@ -555,7 +529,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Scaffold(
       appBar: AppBar(
         title: Text('Dashboard ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
-        elevation: 2,
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -637,13 +610,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         children: [
           _buildPlantNavigation(plantName),
           const SizedBox(height: 16),
-          
-          // Añadir resumen estadístico
-          _buildStatisticsSummary(plantReports),
-          const SizedBox(height: 16),
-          
-          // Contenido en pestañas
-          _buildTabContent(plantName, plantReports),
+          _buildDetailedDashboard(plantName, plantReports),
         ],
       );
     } else {
@@ -662,14 +629,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             const Icon(
               Icons.info_outline,
               size: 48,
-              color: AppTheme.textHintColor,
+              color: Colors.grey,
             ),
             const SizedBox(height: 16),
             Text(
               'No hay reportes para el día ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
               style: const TextStyle(
                 fontSize: 16,
-                color: AppTheme.textSecondaryColor,
+                color: Colors.grey,
               ),
               textAlign: TextAlign.center,
             ),
@@ -697,25 +664,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           tooltip: 'Planta anterior',
         ),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: context.primaryColor,
-                  width: 2,
-                ),
-              ),
+          child: Text(
+            plantName,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            child: Text(
-              plantName,
-              style: context.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         IconButton(
@@ -726,413 +682,84 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ],
     );
   }
-  
-  // Widget para mostrar estadísticas de resumen
-  Widget _buildStatisticsSummary(List<Report> reports) {
-    // Calcular algunas estadísticas útiles
-    final totalReports = reports.length;
-    final uniqueLeaders = reports.map((r) => r.leader).toSet().length;
-    final hasMorningShift = reports.any((r) => r.shift == 'Mañana');
-    final hasAfternoonShift = reports.any((r) => r.shift == 'Tarde');
-    final hasNightShift = reports.any((r) => r.shift == 'Noche');
-    final shiftsCompleted = [hasMorningShift, hasAfternoonShift, hasNightShift].where((s) => s).length;
-    
-    return SizedBox(
-      height: 120,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          StatCard(
-            title: 'Total Reportes',
-            value: '$totalReports',
-            subtitle: 'Para esta planta',
-            icon: Icons.assignment,
-            color: AppTheme.primaryColor,
-            trend: Trend.neutral,
-          ),
-          const SizedBox(width: 12),
-          StatCard(
-            title: 'Líderes',
-            value: '$uniqueLeaders',
-            subtitle: 'Reportadores diferentes',
-            icon: Icons.person,
-            color: AppTheme.secondaryColor,
-            trend: Trend.neutral,
-          ),
-          const SizedBox(width: 12),
-          StatCard(
-            title: 'Turnos Completados',
-            value: '$shiftsCompleted / 3',
-            subtitle: shiftsCompleted == 3 ? 'Todos los turnos registrados' : 'Faltan ${3 - shiftsCompleted} turnos',
-            icon: Icons.access_time,
-            color: shiftsCompleted == 3 ? AppTheme.successColor : AppTheme.warningColor,
-            trend: shiftsCompleted == 3 ? Trend.up : Trend.neutral,
-          ),
-        ],
-      ),
-    );
-  }
 
-  // Widget para mostrar contenido en pestañas
-  Widget _buildTabContent(String plantName, List<Report> plantReports) {
-    return RepaintBoundary(
-      key: _singleDashboardKey,
-      child: CustomCard(
-        elevation: 4,
-        showHeader: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: context.primaryColor.withOpacity(0.1),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                labelColor: context.primaryColor,
-                unselectedLabelColor: context.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                indicatorColor: context.primaryColor,
-                indicatorWeight: 3,
-                tabs: _tabTitles.map((title) => Tab(text: title)).toList(),
-              ),
-            ),
-            const Divider(height: 1),
-            SizedBox(
-              height: 400, // Altura fija para el contenido
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildProductionTab(plantReports),
-                  _buildShiftsTab(plantReports),
-                  _buildNotesTab(plantReports),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  // Pestaña de producción con visualización de barras nativa
-  Widget _buildProductionTab(List<Report> reports) {
-    // Agrupar datos por turno para mostrar comparativas
-    final shiftsData = <String, Map<String, dynamic>>{};
-    
-    for (var report in reports) {
-      final shift = report.shift;
-      if (!shiftsData.containsKey(shift)) {
-        shiftsData[shift] = {};
-      }
-      
-      report.data.forEach((key, value) {
-        if (value is num || value is String && double.tryParse(value) != null) {
-          // Intentar obtener valor numérico
-          final numValue = value is num ? value.toDouble() : double.tryParse(value) ?? 0.0;
-          shiftsData[shift]![key] = numValue;
-        }
-      });
-    }
-    
-    // Si no hay datos para mostrar
-    if (shiftsData.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('No hay datos de producción disponibles'),
-        ),
-      );
-    }
-    
-    // Determinar métricas comunes entre turnos para poder comparar
-    final Set<String> commonMetrics = {};
-    bool isFirstShift = true;
-    
-    for (var shiftData in shiftsData.values) {
-      if (isFirstShift) {
-        commonMetrics.addAll(shiftData.keys);
-        isFirstShift = false;
-      } else {
-        commonMetrics.retainAll(shiftData.keys);
-      }
-    }
-    
-    // Si no hay métricas comunes
-    if (commonMetrics.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('No hay métricas comunes para comparar entre turnos'),
-        ),
-      );
-    }
-    
-    // Seleccionar algunas métricas clave para mostrar en gráficos
-    List<String> metricsToShow = commonMetrics.take(3).toList();
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Comparativa de producción por turno',
-            style: context.textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          
-          // Gráfico de barras nativo para comparar métricas entre turnos
-          SizedBox(
-            height: 200,
-            child: _buildNativeBarChart(shiftsData, metricsToShow),
-          ),
-          
-          const SizedBox(height: 24),
-          Text(
-            'Detalle de métricas por turno',
-            style: context.textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          
-          // Tabla detallada de datos
-          _buildDataTable(shiftsData, commonMetrics),
-        ],
-      ),
-    );
-  }
-  
-  // Widget para construir un gráfico de barras nativo sin dependencias
-  Widget _buildNativeBarChart(Map<String, Map<String, dynamic>> shiftsData, List<String> metrics) {
-    final List<String> shifts = shiftsData.keys.toList();
-    final Map<String, Color> shiftColorMap = {
-      for (var shift in shifts) 
-        shift: AppTheme.shiftColors[shift] ?? AppTheme.primaryColor,
-    };
-    
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: context.theme.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: context.theme.dividerColor),
-      ),
-      child: Column(
-        children: [
-          // Leyenda del gráfico
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: shifts.map((shift) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: shiftColorMap[shift],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(shift, style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          
-          // Área del gráfico
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: metrics.map((metric) {
-                // Formatear nombre de métrica para mostrar
-                final formattedMetric = metric.split('_')
-                  .map((word) => word.isNotEmpty 
-                    ? '${word[0].toUpperCase()}${word.substring(1)}' 
-                    : '')
-                  .join(' ');
-                  
-                // Calcular el valor máximo para esta métrica entre todos los turnos
-                double maxValue = 0;
-                for (var shift in shifts) {
-                  final value = shiftsData[shift]![metric] as double? ?? 0.0;
-                  if (value > maxValue) maxValue = value;
-                }
-                
-                // Ajustar a un valor más amigable para mostrar
-                maxValue = maxValue * 1.2; // 20% de margen
-                
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        // Barras para cada turno
-                        ...shifts.map((shift) {
-                          final value = shiftsData[shift]![metric] as double? ?? 0.0;
-                          final double heightPercentage = maxValue > 0 ? value / maxValue : 0;
-                          
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 4),
-                            width: 20,
-                            height: 100 * heightPercentage,
-                            decoration: BoxDecoration(
-                              color: shiftColorMap[shift],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            alignment: Alignment.center,
-                            child: value > 0 && heightPercentage > 0.2
-                                ? Text(
-                                    value.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )
-                                : null,
-                          );
-                        }),
-                        
-                        // Nombre de la métrica
-                        const SizedBox(height: 8),
-                        Text(
-                          formattedMetric,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: context.textTheme.bodySmall?.color,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Widget para construir tabla de datos detallados
-  Widget _buildDataTable(Map<String, Map<String, dynamic>> shiftsData, Set<String> metrics) {
-    final List<String> shifts = shiftsData.keys.toList();
-    
-    // Ordenar métricas alfabéticamente para mejor presentación
-    final List<String> sortedMetrics = metrics.toList()..sort();
-    
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 24,
-        headingRowColor: WidgetStateProperty.all(context.primaryColor.withOpacity(0.1)),
-        border: TableBorder.all(
-          color: context.theme.dividerColor,
-          width: 1,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        columns: [
-          const DataColumn(
-            label: Expanded(
-              child: Text(
-                'Métrica',
-                style: TextStyle(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-          ...shifts.map((shift) => DataColumn(
-            label: Expanded(
-              child: Text(
-                shift,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.shiftColors[shift] ?? AppTheme.primaryColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          )),
-        ],
-        rows: sortedMetrics.map((metric) {
-          // Formatear nombre de métrica para mostrar
-          final formattedMetric = metric.split('_')
-            .map((word) => word.isNotEmpty 
-              ? '${word[0].toUpperCase()}${word.substring(1)}' 
-              : '')
-            .join(' ');
-            
-          return DataRow(
-            cells: [
-              DataCell(Text(formattedMetric)),
-              ...shifts.map((shift) {
-                final value = shiftsData[shift]![metric];
-                return DataCell(
-                  Text(
-                    value?.toString() ?? '-',
-                    textAlign: TextAlign.right,
-                  ),
-                );
-              }),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-  
-  // Pestaña de turnos
-  Widget _buildShiftsTab(List<Report> reports) {
+  // Widget para mostrar el dashboard detallado de una planta
+  Widget _buildDetailedDashboard(String plantName, List<Report> plantReports) {
     // Agrupar reportes por turno
     Map<String, List<Report>> reportsByShift = {};
     for (var shift in _shifts) {
-      reportsByShift[shift] = reports.where((r) => r.shift == shift).toList();
+      reportsByShift[shift] = plantReports.where((r) => r.shift == shift).toList();
     }
     
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var shift in _shifts) ...[
-            if (reportsByShift[shift]!.isNotEmpty) ...[
+    return RepaintBoundary(
+      key: _singleDashboardKey,
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                plantName,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Divider(),
+              const Text(
+                'Resumen de producción por turno:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
-              _buildShiftSection(shift, reportsByShift[shift]!),
-              const SizedBox(height: 16),
+              
+              // Recorremos cada turno
+              for (var shift in _shifts) ...[
+                if (reportsByShift[shift]!.isNotEmpty) ...[
+                  _buildShiftSection(shift, reportsByShift[shift]!),
+                  const SizedBox(height: 16),
+                ],
+              ],
+              
+              const Text(
+                'Novedades reportadas:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildNotesList(plantReports),
             ],
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }
   
   // Widget para mostrar información de un turno
   Widget _buildShiftSection(String shift, List<Report> reports) {
-    // Usar colores del tema para cada turno
-    final shiftColor = AppTheme.shiftColors[shift] ?? Colors.grey[700]!;
+    // Color para cada turno
+    final shiftColors = {
+      'Mañana': Colors.amber[700],
+      'Tarde': Colors.blue[700],
+      'Noche': Colors.indigo[700],
+    };
     
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: shiftColor.withOpacity(0.1),
+        color: shiftColors[shift]?.withOpacity(0.1) ?? Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: shiftColor,
+          color: shiftColors[shift] ?? Colors.grey,
           width: 1,
         ),
       ),
@@ -1140,62 +767,39 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: shiftColor,
+              color: shiftColors[shift] ?? Colors.grey,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  _getShiftIcon(shift),
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Turno: $shift',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Líder: ${reports.isNotEmpty ? reports.first.leader : "No asignado"}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+            child: Text(
+              'Turno: $shift',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Datos de producción:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                Text(
+                  'Líder: ${reports.isNotEmpty ? reports.first.leader : "No asignado"}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
+                const Text('Datos de producción:'),
+                const SizedBox(height: 4),
                 
-                // Datos de producción formateados en grid
+                // Extraer datos de producción del primer reporte del turno
                 if (reports.isNotEmpty)
-                  _buildProductionGrid(reports.first)
+                  _buildProductionData(reports.first)
                 else
                   const Text('No hay datos de producción para este turno'),
               ],
@@ -1206,104 +810,73 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
   
-  // Widget para mostrar datos de producción en formato grid
-  Widget _buildProductionGrid(Report report) {
-    final List<MapEntry<String, dynamic>> data = report.data.entries.toList();
+  // Widget para mostrar datos de producción en formato tabla
+  Widget _buildProductionData(Report report) {
+    // Extraer datos de producción del reporte
+    final productionData = <Widget>[];
     
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: data.length,
-      itemBuilder: (context, index) {
-        final entry = data[index];
-        final formattedKey = entry.key.split('_')
+    report.data.forEach((key, value) {
+      // Formatear el nombre de la clave (eliminar guiones bajos, capitalizar)
+      final formattedKey = key.split('_')
           .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
           .join(' ');
-          
-        return Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(6),
-          ),
+      
+      // Añadir cada dato con su valor
+      productionData.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
           child: Row(
             children: [
               Expanded(
-                flex: 2,
-                child: Text(
-                  formattedKey,
-                  style: const TextStyle(fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                flex: 3,
+                child: Text(formattedKey),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Text(
-                  '${entry.value}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                  value.toString(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.end,
                 ),
               ),
             ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
+    
+    return Column(children: productionData);
   }
-  
-  // Pestaña de notas y novedades
-  Widget _buildNotesTab(List<Report> reports) {
+
+  // Widget para mostrar lista de notas
+  Widget _buildNotesList(List<Report> reports) {
     // Filtrar reportes que tienen notas
     final reportsWithNotes = reports.where((r) => r.notes != null && r.notes!.isNotEmpty).toList();
     
     if (reportsWithNotes.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('No hay novedades reportadas para esta planta'),
-        ),
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text('No hay novedades reportadas para esta planta'),
       );
     }
     
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: reportsWithNotes.length,
-      itemBuilder: (context, index) {
-        final report = reportsWithNotes[index];
-        final shiftColor = AppTheme.shiftColors[report.shift] ?? Colors.grey[700]!;
-        
-        return CustomCard(
-          title: 'Novedad - Turno ${report.shift}',
-          subtitle: 'Reportado por ${report.leader}',
-          accentColor: shiftColor,
-          icon: Icons.notifications,
-          contentPadding: const EdgeInsets.all(16),
-          child: Text(report.notes ?? ''),
+    return Column(
+      children: reportsWithNotes.map((report) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            title: Text(
+              'Turno: ${report.shift}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(report.notes ?? ''),
+            ),
+            isThreeLine: true,
+          ),
         );
-      },
+      }).toList(),
     );
-  }
-  
-  // Obtener icono para cada turno
-  IconData _getShiftIcon(String shift) {
-    switch (shift) {
-      case 'Mañana':
-        return Icons.wb_sunny;
-      case 'Tarde':
-        return Icons.wb_twilight;
-      case 'Noche':
-        return Icons.nightlight_round;
-      default:
-        return Icons.access_time;
-    }
   }
 }

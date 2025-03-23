@@ -220,26 +220,7 @@ class ReportCard extends StatelessWidget {
       ),
     );
   }
-  /// Formatea una fecha en formato legible
 
-  /// Formatea la hora en formato HH:MM
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
-  /// Obtiene el nombre del día de la semana
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1: return 'Lunes';
-      case 2: return 'Martes';
-      case 3: return 'Miércoles';
-      case 4: return 'Jueves';
-      case 5: return 'Viernes';
-      case 6: return 'Sábado';
-      case 7: return 'Domingo';
-      default: return '';
-    }
-  }
 }
 
 /// Tarjeta para datos estadísticos con valor numérico destacado

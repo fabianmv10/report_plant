@@ -273,10 +273,10 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       backgroundColor: darkColorScheme.surface,
       elevation: 0,
-      centerTitle: false,
+      centerTitle: true,
       titleTextStyle: const TextStyle(
         fontSize: 20,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w900,
       ),
     ),
     cardTheme: CardTheme(
