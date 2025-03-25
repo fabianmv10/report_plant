@@ -85,8 +85,8 @@ class PlantDatabaseService {
           CREATE TABLE sulfato_tipo_a(
             report_id TEXT PRIMARY KEY,
             referencia TEXT NOT NULL,
-            produccion_primera_reaccion REAL NOT NULL,
-            produccion_segunda_reaccion REAL NOT NULL,
+            produccion_stas_1ra_reaccion REAL NOT NULL,
+            produccion_stas_2da_reaccion REAL NOT NULL,
             produccion_liquida REAL NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
           )
