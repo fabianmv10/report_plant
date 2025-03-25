@@ -5,29 +5,32 @@ class PlantParameters {
       case '1': // Sulfato de Aluminio Tipo A
         return [
           {'name': 'Referencia', 'type': 'dropdown', 'options': ['SATA x 25 Kg', 'SATA IF x 25 Kg', 'SATA IF x 1000 Kg']},
-          {'name': 'Producción Primera Reacción', 'unit': 'Un', 'min': 0, 'max': 150},
-          {'name': 'Producción Segunda Reacción', 'unit': 'Un', 'min': 0, 'max': 150},
+          {'name': 'Producción STAS 1ra Reacción', 'unit': 'Un', 'min': 0, 'max': 150},
+          {'name': 'Producción STAS 2da Reacción', 'unit': 'Un', 'min': 0, 'max': 150},
           {'name': 'Producción Liquida', 'unit': 'kg', 'min': 0, 'max': 16000},
         ];
       case '2': // Sulfato de Aluminio Tipo B
         return [
           {'name': 'Reacción de STBS', 'unit': 'Reacción', 'min': 0, 'max': 2},
-          {'name': 'Reacción de STBL', 'unit': 'Reacción', 'min': 0, 'max': 2},
           {'name': 'Producción STBS Empaque', 'unit': 'Un', 'min': 0, 'max': 300},
+          {'name': 'Reacción de STBL', 'unit': 'Reacción', 'min': 0, 'max': 2},
+          {'name': 'Decantador de STBL','type': 'dropdown', 'options': ['Decantador 1', 'Decantador 2']},
           {'name': 'Producción STBL Tanque', 'unit': 'Kg', 'min': 0, 'max': 50000},
+          {'name': 'Tanque de STBL','type': 'dropdown', 'options': ['Tanque 1', 'Tanque 2', 'Tanque 3', 'Tanque 4']},
         ];
       case '3': // Banalum
         return [
-          {'name': 'Cristalizador Producción', 'type': 'dropdown', 'options': ['Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
-          {'name': 'Tipo Producción', 'type': 'dropdown', 'options': ['Reacción', 'Recristalización', 'Descunche']},
-          {'name': 'Referencia', 'type': 'dropdown', 'options': ['Banalum', 'Alumbre K']},
+          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Banalum', 'Alumbre K']},
+          {'name': 'Tipo Producción', 'type': 'dropdown', 'options': ['Sin Reacción','Reacción', 'Recristalización', 'Descunche']},
+          {'name': 'Equipo Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
+          {'name': 'Tipo Empaque', 'type': 'dropdown', 'options': ['Reacción', 'Recristalización', 'Descunche']},
           {'name': 'Cristalizador Empaque', 'type': 'dropdown', 'options': ['Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
           {'name': 'Producción Empaque', 'unit': 'Un', 'min': 0, 'max': 250},
         ];
       case '4': // Bisulfito de Sodio
         return [
           {'name': 'Estado Producción', 'type': 'dropdown', 'options': ['Sin Producción', 'Preparación','Reacción','Trasiego']},
-          {'name': 'Cantidad Trasiego', 'unit': 'Kg', 'min': 0, 'max': 14000},
+          {'name': 'Producción Bisulfito', 'unit': 'Kg', 'min': 0, 'max': 14000},
           {'name': 'pH Concentrador 1', 'unit': '', 'min': 4, 'max': 11},
           {'name': 'Densidad Concentrador 1', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
           {'name': 'pH Concentrador 2', 'unit': '', 'min': 4, 'max': 11},
@@ -35,34 +38,36 @@ class PlantParameters {
         ];
       case '5': // Silicatos
         return [
-          {'name': 'Referencia', 'type': 'dropdown', 'options': ['Silicato Sodio P40', 'Silicato Sodio S50','Silicato Potasio K40','Silicato Potasio K47']},
-          {'name': 'Cantidad', 'unit': 'Kg', 'min': 0, 'max': 15000},
+          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Silicato Sodio P40', 'Silicato Sodio S50','Silicato Potasio K40','Silicato Potasio K47']},
+          {'name': 'Reacción de Silicato', 'unit': 'Reacción', 'min': 0, 'max': 2},
+          {'name': 'Producción de Silicato', 'unit': 'Kg', 'min': 0, 'max': 15000},
           {'name': 'Baume', 'unit': '°Be', 'min': 0, 'max': 55},
           {'name': 'Presión', 'unit': 'psi', 'min': 0, 'max': 150},
         ];
       case '6': // Policloruro de Aluminio
         return [
           {'name': 'Reacción de CloAl', 'type': 'dropdown', 'options': ['Sin Reacción','Cloruro de Aluminio']},
-          {'name': 'Cantidad Trasiego Tanque', 'unit': 'L', 'min': 0, 'max': 6000},
+          {'name': 'Producción CloAl', 'unit': 'L', 'min': 0, 'max': 6000},
+          {'name': 'Densidad CloAl', 'unit': 'L', 'min': 0, 'max': 6000},
           {'name': 'Reacción de Policloruro', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrafloc 100', 'Ultrafloc 200','Ultrafloc 300']},
-          {'name': 'Cantidad Producto Filtrado', 'unit': 'L', 'min': 0, 'max': 8000},
-          {'name': 'Densidad Producto Filtrado', 'unit': 'gr/mL', 'min': 1.28, 'max': 1.35},
+          {'name': 'Producción Policloruro', 'unit': 'L', 'min': 0, 'max': 8000},
+          {'name': 'Densidad Policloruro', 'unit': 'gr/mL', 'min': 1.28, 'max': 1.35},
         ];
       case '7': // Polimeros Cationicos
         return [
-          {'name': 'Referencia', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond 21032', 'Ultrabond 23032','Ultrabond 33005','Ultrafloc 4001/Rapised A','Ultrafloc 4002/Rapised B','Ultrafloc 4010']},
-          {'name': 'Cantidad', 'unit': 'Kg', 'min': 0, 'max': 1},
-          {'name': 'Densidad', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
-          {'name': 'pH', 'unit': '', 'min': 3, 'max': 7},
-          {'name': 'Solidos', 'unit': '%', 'min': 30, 'max': 70},
+          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond 21032', 'Ultrabond 23032','Ultrabond 33005','Ultrafloc 4001/Rapised A','Ultrafloc 4002/Rapised B','Ultrafloc 4010']},
+          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 1},
+          {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
+          {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
+          {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
         ];
       case '8': // Polimeros Anionicos
         return [
-          {'name': 'Referencia', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond DC', 'Ultrabond 4010']},
-          {'name': 'Cantidad', 'unit': 'Kg', 'min': 0, 'max': 1},
-          {'name': 'Densidad', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
-          {'name': 'pH', 'unit': '', 'min': 3, 'max': 7},
-          {'name': 'Solidos', 'unit': '%', 'min': 30, 'max': 70},
+          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond DC', 'Ultrabond 4010']},
+          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 1},
+          {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
+          {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
+          {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
         ];
       case '9': // Llenados
         return [

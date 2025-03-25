@@ -98,9 +98,11 @@ class PlantDatabaseService {
           CREATE TABLE sulfato_tipo_b(
             report_id TEXT PRIMARY KEY,
             reaccion_de_stbs REAL NOT NULL,
-            reaccion_de_stbl REAL NOT NULL,
             produccion_stbs_empaque REAL NOT NULL,
+            reaccion_de_stbl REAL NOT NULL,
+            decantador_de_stbl REAL NOT NULL,
             produccion_stbl_tanque REAL NOT NULL,
+            tanque_stbl TEXT NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
           )
         ''');
@@ -110,11 +112,12 @@ class PlantDatabaseService {
         await db.execute('''
           CREATE TABLE banalum(
             report_id TEXT PRIMARY KEY,
-            produccion_banalum TEXT NOT NULL,
-            tipo TEXT NOT NULL,
-            referencia TEXT NOT NULL,
+            referencia_reaccion TEXT NOT NULL,
+            tipo_produccion TEXT NOT NULL,
+            equipo_reaccion TEXT NOT NULL,
+            tipo_empaque TEXT NOT NULL,
             cristalizador_empaque TEXT NOT NULL,
-            produccion_ban_empaque REAL NOT NULL,
+            produccion_empaque REAL NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
           )
         ''');
@@ -125,7 +128,7 @@ class PlantDatabaseService {
           CREATE TABLE bisulfito_sodio(
             report_id TEXT PRIMARY KEY,
             estado_produccion TEXT NOT NULL,
-            cantidad_trasiego REAL NOT NULL,
+            producción_bisulfito REAL NOT NULL,
             ph_concentrador_1 REAL NOT NULL,
             densidad_concentrador_1 REAL NOT NULL,
             ph_concentrador_2 REAL NOT NULL,
@@ -139,8 +142,9 @@ class PlantDatabaseService {
         await db.execute('''
           CREATE TABLE silicatos(
             report_id TEXT PRIMARY KEY,
-            referencia TEXT NOT NULL,
-            cantidad REAL NOT NULL,
+            referencia_reaccion TEXT NOT NULL,
+            reaccion_de_silicato REAL NOT NULL,
+            produccion_de_silicato REAL NOT NULL,
             baume REAL NOT NULL,
             presion REAL NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
@@ -152,11 +156,12 @@ class PlantDatabaseService {
         await db.execute('''
           CREATE TABLE policloruro(
             report_id TEXT PRIMARY KEY,
-            reaccion_cloal TEXT NOT NULL,
-            cantidad_trasiego_tanque REAL NOT NULL,
-            reaccion_policloruro TEXT NOT NULL,
-            cantidad_producto_filtrado REAL NOT NULL,
-            densidad_producto_filtrado REAL NOT NULL,
+            reaccion_de_cloal TEXT NOT NULL,
+            produccion_cloal REAL NOT NULL,
+            densidad_cloal REAL NOT NULL,
+            reaccion_de_policloruro TEXT NOT NULL,
+            produccion_policloruro REAL NOT NULL,
+            densidad_policloruro REAL NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
           )
         ''');
@@ -166,11 +171,11 @@ class PlantDatabaseService {
         await db.execute('''
           CREATE TABLE polimeros_cationicos(
             report_id TEXT PRIMARY KEY,
-            referencia TEXT NOT NULL,
-            cantidad REAL NOT NULL,
-            densidad REAL NOT NULL,
-            ph REAL NOT NULL,
-            solidos REAL NOT NULL,
+            referencia_reaccion TEXT NOT NULL,
+            produccion_polimero REAL NOT NULL,
+            densidad_polimero REAL NOT NULL,
+            ph_polimero REAL NOT NULL,
+            solidos_polimero REAL NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
           )
         ''');
@@ -180,11 +185,11 @@ class PlantDatabaseService {
         await db.execute('''
           CREATE TABLE polimeros_anionicos(
             report_id TEXT PRIMARY KEY,
-            referencia TEXT NOT NULL,
-            cantidad REAL NOT NULL,
-            densidad REAL NOT NULL,
-            ph REAL NOT NULL,
-            solidos REAL NOT NULL,
+            referencia_reaccion TEXT NOT NULL,
+            produccion_polimero REAL NOT NULL,
+            densidad_polimero REAL NOT NULL,
+            ph_polimero REAL NOT NULL,
+            solidos_polimero REAL NOT NULL,
             FOREIGN KEY (report_id) REFERENCES reports (id)
           )
         ''');
