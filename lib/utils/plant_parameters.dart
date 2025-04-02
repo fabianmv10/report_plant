@@ -1,18 +1,19 @@
+// lib/utils/plant_parameters.dart
 class PlantParameters {
   /// Obtener los parámetros para una planta específica
   static List<Map<String, dynamic>> getParameters(String plantId) {
     switch (plantId) {
       case '1': // Sulfato de Aluminio Tipo A
         return [
-          {'name': 'Referencia', 'type': 'dropdown', 'options': ['SATA x 25 Kg', 'SATA IF x 25 Kg', 'SATA IF x 1000 Kg']},
-          {'name': 'Producción STAS 1ra Reacción', 'unit': 'Un', 'min': 0, 'max': 150},
-          {'name': 'Producción STAS 2da Reacción', 'unit': 'Un', 'min': 0, 'max': 150},
+          {'name': 'Referencia', 'type': 'dropdown', 'options': ['SATA x 25 Kg', 'SATA IF x 25 Kg', 'SATA IF x 1000 Kg'], 'conversion_factor': {'SATA x 25 Kg': 25.0, 'SATA IF x 25 Kg': 25.0, 'SATA IF x 1000 Kg': 1000.0}},
+          {'name': 'Producción STAS 1ra Reacción', 'unit': 'Un', 'min': 0, 'max': 150, 'conversion': 25.0}, // Multiplicador para convertir unidades a kg
+          {'name': 'Producción STAS 2da Reacción', 'unit': 'Un', 'min': 0, 'max': 150, 'conversion': 25.0},
           {'name': 'Producción Liquida', 'unit': 'kg', 'min': 0, 'max': 16000},
         ];
       case '2': // Sulfato de Aluminio Tipo B
         return [
           {'name': 'Reacción de STBS', 'unit': 'Reacción', 'min': 0, 'max': 2},
-          {'name': 'Producción STBS Empaque', 'unit': 'Un', 'min': 0, 'max': 300},
+          {'name': 'Producción STBS Empaque', 'unit': 'Un', 'min': 0, 'max': 300, 'conversion': 25.0},
           {'name': 'Reacción de STBL', 'unit': 'Reacción', 'min': 0, 'max': 2},
           {'name': 'Decantador de STBL','type': 'dropdown', 'options': ['Decantador 1', 'Decantador 2']},
           {'name': 'Producción STBL Tanque', 'unit': 'Kg', 'min': 0, 'max': 50000},
@@ -25,7 +26,7 @@ class PlantParameters {
           {'name': 'Equipo Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
           {'name': 'Tipo Empaque', 'type': 'dropdown', 'options': ['Reacción', 'Recristalización', 'Descunche']},
           {'name': 'Cristalizador Empaque', 'type': 'dropdown', 'options': ['Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
-          {'name': 'Producción Empaque', 'unit': 'Un', 'min': 0, 'max': 250},
+          {'name': 'Producción Empaque', 'unit': 'Un', 'min': 0, 'max': 250, 'conversion': 25.0},
         ];
       case '4': // Bisulfito de Sodio
         return [
@@ -38,7 +39,7 @@ class PlantParameters {
         ];
       case '5': // Silicatos
         return [
-          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Silicato Sodio P40', 'Silicato Sodio S50','Silicato Potasio K40','Silicato Potasio K47']},
+          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Silicato Sodio P40', 'Silicato Sodio S50','Silicato Potasio K40','Silicato Potasio K47'], 'conversion_factor': {'Silicato Sodio P40': 1250.0, 'Silicato Sodio S50': 1250.0, 'Silicato Potasio K40': 1250.0, 'Silicato Potasio K47': 1250.0}},
           {'name': 'Reacción de Silicato', 'unit': 'Reacción', 'min': 0, 'max': 2},
           {'name': 'Producción de Silicato', 'unit': 'Kg', 'min': 0, 'max': 15000},
           {'name': 'Baume', 'unit': '°Be', 'min': 0, 'max': 55},
@@ -48,7 +49,7 @@ class PlantParameters {
         return [
           {'name': 'Reacción de CloAl', 'type': 'dropdown', 'options': ['Sin Reacción','Cloruro de Aluminio']},
           {'name': 'Producción CloAl', 'unit': 'L', 'min': 0, 'max': 6000},
-          {'name': 'Densidad CloAl', 'unit': 'L', 'min': 0, 'max': 6000},
+          {'name': 'Densidad CloAl', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
           {'name': 'Reacción de Policloruro', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrafloc 100', 'Ultrafloc 200','Ultrafloc 300']},
           {'name': 'Producción Policloruro', 'unit': 'L', 'min': 0, 'max': 8000},
           {'name': 'Densidad Policloruro', 'unit': 'gr/mL', 'min': 1.28, 'max': 1.35},
@@ -56,7 +57,7 @@ class PlantParameters {
       case '7': // Polimeros Cationicos
         return [
           {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond 21032', 'Ultrabond 23032','Ultrabond 33005','Ultrafloc 4001/Rapised A','Ultrafloc 4002/Rapised B','Ultrafloc 4010']},
-          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 1},
+          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 8000},
           {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
           {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
           {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
@@ -64,7 +65,7 @@ class PlantParameters {
       case '8': // Polimeros Anionicos
         return [
           {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond DC', 'Ultrabond 4010']},
-          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 1},
+          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 8000},
           {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
           {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
           {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
@@ -111,8 +112,8 @@ class PlantParameters {
             'Ultrafloc 4002 1150 Kg',
             'Ultrafloc 4010 250 Kg',
             'Ultrafloc 4020 1000 Kg',
-          ]},
-          {'name': 'Unidades', 'unit': 'Un', 'min': 0, 'max': 50}
+          ], 'has_quantity_in_name': true},
+          {'name': 'Unidades', 'unit': 'Un', 'min': 0, 'max': 50},
         ];
       default:
         return [
@@ -122,6 +123,45 @@ class PlantParameters {
           {'name': 'Nivel de tanque', 'unit': '%', 'min': 0, 'max': 100},
         ];
     }
+  }
+  
+  /// Obtener el factor de conversión para una referencia específica
+  static double getConversionFactor(String plantId, String reference) {
+    // Si la referencia ya tiene la cantidad en el nombre (como "Acido Clorhidrico 200 Kg")
+    if (reference.contains(' Kg') || reference.contains(' kg')) {
+      try {
+        // Extraer el número antes de "Kg" o "kg"
+        final regexp = RegExp(r'(\d+)\s*[Kk]g');
+        final match = regexp.firstMatch(reference);
+        if (match != null && match.groupCount >= 1) {
+          return double.parse(match.group(1)!);
+        }
+      } catch (_) {
+        // Si hay algún error en la extracción, usar valor por defecto
+      }
+    }
+    
+    // Factores de conversión predefinidos para referencias comunes
+    final Map<String, double> conversionFactors = {
+      'SATA x 25 Kg': 25.0,
+      'SATA IF x 25 Kg': 25.0,
+      'SATA IF x 1000 Kg': 1000.0,
+      'Silicato Sodio P40': 1250.0,
+      'Silicato Sodio S50': 1250.0,
+      'Silicato Potasio K40': 1250.0,
+      'Silicato Potasio K47': 1250.0,
+      'Ultrafloc 100': 1250.0,
+      'Ultrafloc 200': 1200.0,
+      'Ultrafloc 300': 1250.0,
+      'Ultrabond 21032': 1050.0,
+      'Ultrabond 23032': 1050.0,
+      'Ultrabond DC': 1000.0,
+      'Ultrabond 4010': 1000.0,
+      'Banalum': 25.0,
+      'Alumbre K': 25.0,
+    };
+    
+    return conversionFactors[reference] ?? 1.0;
   }
   
   /// Obtener el nombre de la planta por ID
@@ -173,6 +213,85 @@ class PlantParameters {
       case 'Tarde': return 0xEC0F; // wb_twilight: 0xEC0F
       case 'Noche': return 0xE3A8; // nightlight_round: 0xE3A8
       default: return 0xE192; // access_time: 0xE192
+    }
+  }
+  
+  /// Extraer la cantidad de una referencia (por ejemplo, "Acido Clorhidrico 200 Kg" → 200)
+  static double extractQuantityFromReference(String reference) {
+    try {
+      final regexp = RegExp(r'(\d+)\s*[Kk]g');
+      final match = regexp.firstMatch(reference);
+      if (match != null && match.groupCount >= 1) {
+        return double.parse(match.group(1)!);
+      }
+    } catch (_) {
+      // Si hay algún error en la extracción, usar valor por defecto
+    }
+    return 0.0;
+  }
+  
+  /// Obtener las metas de producción para una planta
+  static Map<String, double> getProductionTargets(String plantId) {
+    final targets = <String, double>{};
+    
+    switch (plantId) {
+      case '1': // Sulfato de Aluminio Tipo A
+        targets['produccion_stas_1ra_reaccion'] = 150; // unidades
+        targets['produccion_stas_2da_reaccion'] = 150; // unidades
+        targets['produccion_liquida'] = 12000; // kg
+        break;
+        
+      case '2': // Sulfato de Aluminio Tipo B
+        targets['produccion_stbs_empaque'] = 250; // unidades
+        targets['produccion_stbl_tanque'] = 40000; // kg
+        break;
+        
+      case '3': // Banalum
+        targets['produccion_empaque'] = 220; // unidades
+        break;
+        
+      case '4': // Bisulfito de Sodio
+        targets['produccion_bisulfito'] = 11000; // kg
+        break;
+        
+      case '5': // Silicatos
+        targets['produccion_de_silicato'] = 11000; // kg
+        break;
+        
+      case '6': // Policloruro de Aluminio
+        targets['produccion_cloal'] = 5300; // litros
+        targets['produccion_policloruro'] = 4300; // litros
+        break;
+        
+      case '7': // Polímeros Catiónicos
+        targets['produccion_polimero'] = 5000; // kg
+        break;
+        
+      case '8': // Polímeros Aniónicos
+        targets['produccion_polimero'] = 5200; // kg
+        break;
+        
+      case '9': // Llenados
+        targets['unidades'] = 30; // unidades
+        break;
+    }
+    
+    return targets;
+  }
+  
+  /// Calcular la meta de producción total en kg o litros
+  static double getTotalProductionTarget(String plantId) {
+    switch (plantId) {
+      case '1': return 7500; // 150 unidades x 25kg x 2 reacciones
+      case '2': return 46250; // 250 unidades x 25kg + 40000kg
+      case '3': return 5500; // 220 unidades x 25kg
+      case '4': return 11000; // kg
+      case '5': return 11000; // kg
+      case '6': return 9600; // litros (5300 + 4300)
+      case '7': return 5000; // kg
+      case '8': return 5200; // kg
+      case '9': return 7500; // 30 unidades x 250kg (promedio)
+      default: return 5000; // valor predeterminado
     }
   }
 }

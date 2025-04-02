@@ -9,6 +9,7 @@ import 'dart:io';
 import '../models/report.dart';
 import '../services/database_helper.dart';
 import '../widgets/responsive_layout.dart';
+import '../theme/theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -402,6 +403,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'Noche': Colors.indigo[700],
     };
     
+    final report = shiftReports.first;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -442,7 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 4),
                 
                 // Datos de producción con mejor formato
-                _buildProductionDataList(shiftReports.first),
+                _buildProductionDataList(report),
                 
                 // Novedades si existen
                 const SizedBox(height: 6),
@@ -454,15 +457,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Text(
-                  shiftReports.first.notes != null && shiftReports.first.notes!.isNotEmpty
-                      ? shiftReports.first.notes!
+                  report.notes != null && report.notes!.isNotEmpty
+                      ? report.notes!
                       : 'SN',
                   style: TextStyle(
                     fontSize: 13,
-                    fontStyle: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
+                    fontStyle: report.notes == null || report.notes!.isEmpty
                         ? FontStyle.italic
                         : FontStyle.normal,
-                    color: shiftReports.first.notes == null || shiftReports.first.notes!.isEmpty
+                    color: report.notes == null || report.notes!.isEmpty
                         ? Colors.grey
                         : Colors.black,
                   ),
@@ -475,38 +478,109 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Nuevo widget optimizado para mostrar datos de producción
   Widget _buildProductionDataList(Report report) {
-    final items = <Widget>[];
-    
-    report.data.forEach((key, value) {
-      // Formatear la clave (eliminar guiones bajos, capitalizar)
-      final formattedKey = key.split('_')
-          .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
-          .join(' ');
-      
-      // Formato compacto para valores
-      final formattedValue = value is double ? value.toString() : value.toString();
-      
-      items.add(
-        Container(
-          margin: const EdgeInsets.only(bottom: 2),
-          child: Text(
-            '$formattedKey: $formattedValue',
-            style: const TextStyle(fontSize: 12), // Tamaño reducido para evitar desbordamiento
-            overflow: TextOverflow.ellipsis,
-            maxLines: 2,
+    // Verificar si hay valores SATA explícitamente
+    if (report.plant.id == '1') {
+      // Versión simplificada para Sulfato Tipo A
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Referencia
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Referencia:'),
+              Text(
+                report.data['referencia'] != null 
+                  ? report.data['referencia'].toString() 
+                  : 'N/A',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-        ),
+          const SizedBox(height: 4),
+          
+          // Primera reacción
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Producción Stas 1ra Reacción:'),
+              Text(
+                report.data['produccion_stas_1ra_reaccion'] != null 
+                  ? '${report.data['produccion_stas_1ra_reaccion']} un' 
+                  : '0 un',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          
+          // Segunda reacción 
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Producción Stas 2da Reacción:'),
+              Text(
+                report.data['produccion_stas_2da_reaccion'] != null 
+                  ? '${report.data['produccion_stas_2da_reaccion']} un' 
+                  : '0 un',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          
+          // Producción líquida
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Producción Líquida:'),
+              Text(
+                report.data['produccion_liquida'] != null 
+                  ? '${report.data['produccion_liquida']} kg' 
+                  : '0 kg',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
       );
+    }
+    
+    // Para otras plantas, mostrar todos los datos disponibles
+    final items = <Widget>[];
+    report.data.forEach((key, value) {
+      if (value != null) {
+        final formattedKey = key.split('_')
+            .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+            .join(' ');
+        
+        items.add(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$formattedKey:'),
+              Text(
+                value.toString(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        );
+      }
     });
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: items,
+      children: items.isEmpty 
+        ? [const Text('No hay datos disponibles')] 
+        : items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: item,
+          )).toList(),
     );
   }
-
+  
   // Método para compartir imágenes
   Future<void> _shareDashboardImage(Uint8List pngBytes, String type) async {
     try {
@@ -558,7 +632,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
+  
   // Widget para mostrar el indicador de carga
   Widget _buildLoadingOverlay() {
     return Container(
@@ -746,7 +820,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   
   // Widget para mostrar información de un turno
   Widget _buildShiftSection(String shift, List<Report> reports) {
-    // Color para cada turno
+    if (reports.isEmpty) return const SizedBox.shrink();
+    
+    final report = reports.first;
     final shiftColors = {
       'Mañana': Colors.amber[700],
       'Tarde': Colors.blue[700],
@@ -790,62 +866,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Líder: ${reports.isNotEmpty ? reports.first.leader : "No asignado"}',
+                  'Líder: ${report.leader}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text('Datos de producción:'),
                 const SizedBox(height: 4),
                 
-                // Extraer datos de producción del primer reporte del turno
-                if (reports.isNotEmpty)
-                  _buildProductionData(reports.first)
-                else
-                  const Text('No hay datos de producción para este turno'),
+                // Mostrar datos de producción
+                _buildProductionDataList(report),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-  
-  // Widget para mostrar datos de producción en formato tabla
-  Widget _buildProductionData(Report report) {
-    // Extraer datos de producción del reporte
-    final productionData = <Widget>[];
-    
-    report.data.forEach((key, value) {
-      // Formatear el nombre de la clave (eliminar guiones bajos, capitalizar)
-      final formattedKey = key.split('_')
-          .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
-          .join(' ');
-      
-      // Añadir cada dato con su valor
-      productionData.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Text(formattedKey),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  value.toString(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.end,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
-    
-    return Column(children: productionData);
   }
 
   // Widget para mostrar lista de notas
@@ -878,5 +913,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       }).toList(),
     );
+  }
+  
+  // Métodos auxiliares para acceso seguro a los datos
+  String _getStringValue(Map<String, dynamic> data, String key) {
+    return data.containsKey(key) ? data[key].toString() : '';
+  }
+
+  double _getNumericValue(Map<String, dynamic> data, String key) {
+    if (!data.containsKey(key)) return 0.0;
+    
+    final value = data[key];
+    if (value is num) return value.toDouble();
+    
+    try {
+      return double.parse(value.toString());
+    } catch (_) {
+      return 0.0;
+    }
   }
 }
