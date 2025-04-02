@@ -540,7 +540,6 @@ class _ReportListScreenState extends State<ReportListScreen> {
     );
   }
   
-  // Bottom sheet para filtros en vista móvil
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -550,197 +549,236 @@ class _ReportListScreenState extends State<ReportListScreen> {
       ),
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) => DraggableScrollableSheet(
-            initialChildSize: 0.6,
-            minChildSize: 0.3,
-            maxChildSize: 0.9,
-            expand: false,
-            builder: (context, scrollController) {
-              return ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(24),
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filtros',
-                        style: context.textTheme.titleLarge,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  Text(
-                    'Turno',
-                    style: context.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: context.theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: _filterShift,
-                      icon: const Icon(Icons.arrow_drop_down),
-                      elevation: 16,
-                      underline: Container(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _filterShift = newValue!;
-                        });
-
-                        this.setState(() {
-                        });
-                      },
-                      items: _shiftOptions.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  Text(
-                    'Planta',
-                    style: context.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: context.theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: _filterPlant,
-                      icon: const Icon(Icons.arrow_drop_down),
-                      elevation: 16,
-                      underline: Container(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _filterPlant = newValue!;
-                        });
-
-                        this.setState(() {
-                          
-                        });
-                      },
-                      items: _plantOptions.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  Text(
-                    'Rango de Fechas',
-                    style: context.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final initialDateRange = DateTimeRange(
-                        start: _startDate ?? DateTime.now().subtract(const Duration(days: 7)),
-                        end: _endDate ?? DateTime.now(),
-                      );
-                      
-                      final newDateRange = await showDateRangePicker(
-                        context: context,
-                        initialDateRange: initialDateRange,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now().add(const Duration(days: 1)),
-                      );
-                      
-                      if (newDateRange != null) {
-                        setState(() {
-                          _startDate = newDateRange.start;
-                          _endDate = newDateRange.end;
-                        });
-                        // Actualizar también el estado del widget padre
-                        this.setState(() {});
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: context.theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.date_range),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _startDate != null && _endDate != null
-                                  ? '${_dateFormat.format(_startDate!)} - ${_dateFormat.format(_endDate!)}'
-                                  : 'Seleccionar fechas',
-                            ),
-                          ),
-                          if (_startDate != null)
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 16),
-                              onPressed: () {
-                                setState(() {
-                                  _startDate = null;
-                                  _endDate = null;
-                                });
-                                // Actualizar también el estado del widget padre
-                                this.setState(() {});
-                              },
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      // Ya se han actualizado los estados en los controles
-                    },
-                    child: const Text('Aplicar Filtros'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _filterShift = 'Todos';
-                        _filterPlant = 'Todas';
-                        _startDate = null;
-                        _endDate = null;
-                      });
-                      // Actualizar también el estado del widget padre
-                      this.setState(() {
-                        _resetFilters();
-                      });
-                    },
-                    child: const Text('Limpiar Filtros'),
-                  ),
-                ],
-              );
-            },
-          ),
+          builder: (context, setState) => _buildFilterSheetContent(context, setState),
         );
       },
     );
   }
-  
+
+  // ignore: avoid-unused-parameters
+  Widget _buildFilterSheetContent(BuildContext context, StateSetter sheetSetState) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (context, scrollController) {
+        return ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          children: [
+            _buildFilterSheetHeader(context),
+            const SizedBox(height: 24),
+            _buildShiftFilterSection(sheetSetState),
+            const SizedBox(height: 16),
+            _buildPlantFilterSection(sheetSetState),
+            const SizedBox(height: 16),
+            _buildDateRangeFilterSection(context, sheetSetState),
+            const SizedBox(height: 24),
+            _buildFilterActionButtons(context, sheetSetState),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterSheetHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Filtros',
+          style: context.textTheme.titleLarge,
+        ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShiftFilterSection(StateSetter sheetSetState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Turno',
+          style: context.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        _buildShiftDropdown(sheetSetState),
+      ],
+    );
+  }
+
+  Widget _buildShiftDropdown(StateSetter sheetSetState) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: context.theme.dividerColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        isExpanded: true,
+        value: _filterShift,
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        underline: Container(),
+        onChanged: (String? newValue) {
+          sheetSetState(() {
+            _filterShift = newValue!;
+          });
+        },
+        items: _shiftOptions.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPlantFilterSection(StateSetter sheetSetState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Planta',
+          style: context.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        _buildPlantDropdown(sheetSetState),
+      ],
+    );
+  }
+
+  Widget _buildPlantDropdown(StateSetter sheetSetState) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: context.theme.dividerColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        isExpanded: true,
+        value: _filterPlant,
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        underline: Container(),
+        onChanged: (String? newValue) {
+          sheetSetState(() {
+            _filterPlant = newValue!;
+          });
+        },
+        items: _plantOptions.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDateRangeFilterSection(BuildContext context, StateSetter sheetSetState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Rango de Fechas',
+          style: context.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        _buildDateRangePicker(context, sheetSetState),
+      ],
+    );
+  }
+
+  Widget _buildDateRangePicker(BuildContext context, StateSetter sheetSetState) {
+    final String dateRangeText = _startDate != null && _endDate != null
+        ? '${_dateFormat.format(_startDate!)} - ${_dateFormat.format(_endDate!)}'
+        : 'Seleccionar fechas';
+        
+    return InkWell(
+      onTap: () => _selectDateRangeFromSheet(context, sheetSetState),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: context.theme.dividerColor),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.date_range),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(dateRangeText),
+            ),
+            if (_startDate != null)
+              IconButton(
+                icon: const Icon(Icons.close, size: 16),
+                onPressed: () {
+                  sheetSetState(() {
+                    _startDate = null;
+                    _endDate = null;
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDateRangeFromSheet(BuildContext context, StateSetter sheetSetState) async {
+    final initialDateRange = DateTimeRange(
+      start: _startDate ?? DateTime.now().subtract(const Duration(days: 7)),
+      end: _endDate ?? DateTime.now(),
+    );
+    
+    final newDateRange = await showDateRangePicker(
+      context: context,
+      initialDateRange: initialDateRange,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    
+    if (newDateRange != null) {
+      sheetSetState(() {
+        _startDate = newDateRange.start;
+        _endDate = newDateRange.end;
+      });
+    }
+  }
+
+  Widget _buildFilterActionButtons(BuildContext context, StateSetter sheetSetState) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Aplicar Filtros'),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () {
+            sheetSetState(() {
+              _filterShift = 'Todos';
+              _filterPlant = 'Todas';
+              _startDate = null;
+              _endDate = null;
+            });
+            setState(() {
+              _resetFilters();
+            });
+          },
+          child: const Text('Limpiar Filtros'),
+        ),
+      ],
+    );
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(

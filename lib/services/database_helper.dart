@@ -41,7 +41,7 @@ class DatabaseHelper {
       rethrow;
     }
   }
-
+  // ignore: avoid-unused-parameters
   Future _createDB(Database db, int version) async {
     // Crear tabla de plantas
     await db.execute('''
@@ -135,67 +135,80 @@ class DatabaseHelper {
       ORDER BY r.timestamp DESC
       ''');
       
-      // ignore: avoid_print
-      print("Reportes encontrados en DB: ${result.length}");
-      
-      return result.map((json) {
-        final plant = Plant(
-          id: json['plant_id'] as String,
-          name: json['plant_name'] as String,
-        );
-        
-        // Deserializar los datos con manejo mejorado de tipos
-        Map<String, dynamic> reportData;
-        try {
-          // Intentar parsear el JSON
-          reportData = Map<String, dynamic>.from(jsonDecode(json['data'] as String));
-          
-          // Convertir números en string a tipos numéricos
-          reportData.forEach((key, value) {
-            if (value is String) {
-              // Intentar convertir a número si parece ser numérico
-              try {
-                if (value.contains('.')) {
-                  reportData[key] = double.parse(value);
-                } else {
-                  reportData[key] = int.parse(value);
-                }
-              } catch (_) {
-                // Si falla la conversión, mantener como string
-              }
-            } else if (value == null) {
-              // Reemplazar nulos con valores por defecto según el tipo esperado
-              // Basado en el nombre del campo, podríamos inferir el tipo
-              if (key.contains('cantidad') || 
-                  key.contains('produccion') || 
-                  key.contains('reaccion')) {
-                reportData[key] = 0.0;
-              }
-            }
-          });
-        } catch (e) {
-          // Si hay error al parsear, usar un mapa vacío
-          // ignore: avoid_print
-          print("Error deserializando datos de reporte ${json['id']}: $e");
-          reportData = {};
-        }
-        
-        return Report(
-          id: json['id'] as String,
-          timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-          leader: json['leader'] as String,
-          shift: json['shift'] as String,
-          plant: plant,
-          data: reportData,
-          notes: json['notes'] as String?,
-        );
-      }).toList();
+      return _processReportResults(result);
     } catch (e) {
       // ignore: avoid_print
       print("Error obteniendo reportes: $e");
       return [];
     }
   }
+
+  List<Report> _processReportResults(List<Map<String, dynamic>> results) {
+    return results.map((json) {
+      final plant = Plant(
+        id: json['plant_id'] as String,
+        name: json['plant_name'] as String,
+      );
+      
+      final reportData = _parseReportData(json['data'] as String);
+      
+      return Report(
+        id: json['id'] as String,
+        timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
+        leader: json['leader'] as String,
+        shift: json['shift'] as String,
+        plant: plant,
+        data: reportData,
+        notes: json['notes'] as String?,
+      );
+    }).toList();
+  }
+
+  Map<String, dynamic> _parseReportData(String dataJson) {
+    try {
+      // Intentar parsear el JSON
+      final reportData = Map<String, dynamic>.from(jsonDecode(dataJson));
+      
+      // Convertir strings a tipos numéricos donde corresponda
+      reportData.forEach((key, value) {
+        if (value is String) {
+          reportData[key] = _convertStringValueToNumeric(key, value);
+        } else if (value == null) {
+          reportData[key] = _getDefaultValueForField(key);
+        }
+      });
+      
+      return reportData;
+    } catch (e) {
+      // ignore: avoid_print
+      print("Error deserializando datos de reporte: $e");
+      return {};
+    }
+  }
+
+  // ignore: avoid-unused-parameters
+  dynamic _convertStringValueToNumeric(String key, String value) {
+    try {
+      if (value.contains('.')) {
+        return double.parse(value);
+      } else {
+        return int.parse(value);
+      }
+    } catch (_) {
+      // Si falla la conversión, mantener como string
+      return value;
+    }
+  }
+
+  dynamic _getDefaultValueForField(String key) {
+    if (key.contains('cantidad') || 
+        key.contains('produccion') || 
+        key.contains('reaccion')) {
+      return 0.0;
+    }
+    return '';
+  }
+
 
   Future<List<Report>> getReportsByPlant(String plantId) async {
     final db = await instance.database;
@@ -206,7 +219,7 @@ class DatabaseHelper {
     JOIN plants p ON r.plant_id = p.id
     WHERE r.plant_id = ?
     ORDER BY r.timestamp DESC
-    ''', [plantId]);
+    ''', [plantId],);
     
     return result.map((json) {
       final plant = Plant(

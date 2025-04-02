@@ -9,7 +9,6 @@ import 'dart:io';
 import '../models/report.dart';
 import '../services/database_helper.dart';
 import '../widgets/responsive_layout.dart';
-import '../theme/theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -50,9 +49,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final startOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
       final endOfDay = startOfDay.add(const Duration(days: 1));
       
-      _reports = allReports.where((report) => 
+      _reports = allReports.where((report,) => 
         report.timestamp.isAfter(startOfDay) && 
-        report.timestamp.isBefore(endOfDay)
+        report.timestamp.isBefore(endOfDay),
       ).toList();
       
       // Agrupar reportes por planta
@@ -592,7 +591,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       
       // Compartir la imagen
       await Share.shareXFiles([XFile(filePath)], 
-        text: 'Resumen de producción: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}');
+        text: 'Resumen de producción: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',);
     } catch (e) {
       _showErrorSnackBar('Error al compartir: $e');
     }
@@ -914,22 +913,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }).toList(),
     );
   }
-  
-  // Métodos auxiliares para acceso seguro a los datos
-  String _getStringValue(Map<String, dynamic> data, String key) {
-    return data.containsKey(key) ? data[key].toString() : '';
-  }
 
-  double _getNumericValue(Map<String, dynamic> data, String key) {
-    if (!data.containsKey(key)) return 0.0;
-    
-    final value = data[key];
-    if (value is num) return value.toDouble();
-    
-    try {
-      return double.parse(value.toString());
-    } catch (_) {
-      return 0.0;
-    }
-  }
 }

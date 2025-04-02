@@ -589,103 +589,142 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     );
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSaving = true;
-      });
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() {
+      _isSaving = true;
+    });
+    
+    _formKey.currentState!.save();
+    
+    try {
+      // Procesar datos del reporte
+      final processedData = _processFormData();
       
-      _formKey.currentState!.save();
-
-      // Procesamiento para asegurar tipos numéricos correctos
-      final Map<String, dynamic> processedData = {};
+      // Crear objeto de reporte
+      final newReport = _createReportObject(processedData);
       
-      // Asegurar que todos los valores numéricos tengan el formato correcto
-      _reportData.forEach((key, value) {
-        if (value == null) {
-          // Reemplazar nulos con valores predeterminados según el tipo de campo
-          if (key.contains('produccion') || key.contains('reaccion') || 
-              key.contains('cantidad') || key.contains('densidad')) {
-            processedData[key] = 0.0;
-          } else {
-            processedData[key] = '';
-          }
-        } else if (value is String && key != 'referencia') {
-          // Intentar convertir strings a números si no son referencias
-          try {
-            processedData[key] = double.parse(value);
-          } catch (e) {
-            // Si falla la conversión, mantener como string
-            processedData[key] = value;
-          }
-        } else {
-          // Mantener otros valores como están
-          processedData[key] = value;
-        }
-      });
+      // Guardar en base de datos
+      await _saveReportToDatabase(newReport);
       
-      // Eliminar las novedades del mapa de datos para evitar duplicación
-      processedData.remove('novedades');
-      
-      try {
-        // Crear nuevo reporte con la fecha seleccionada
-        final newReport = Report(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          timestamp: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 
-                    DateTime.now().hour, DateTime.now().minute), // Usar la fecha seleccionada pero con la hora actual
-          leader: _selectedLeader,
-          shift: _selectedShift,
-          plant: widget.plant,
-          data: processedData, // Usar los datos procesados
-          notes: _notesController.text,
-        );
-        
-        // Guardar en la base de datos
-        final result = await DatabaseHelper.instance.insertReport(newReport);
-        
-        if (result > 0) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Reporte guardado correctamente'),
-                backgroundColor: AppTheme.successColor,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                margin: const EdgeInsets.all(16),
-              ),
-            );
-            
-            // Regresar a la pantalla anterior después de un breve retraso
-            await Future.delayed(const Duration(milliseconds: 800));
-            if (mounted) {
-              Navigator.pop(context);
-              Navigator.pop(context); // Volver a la pantalla principal
-            }
-          }
-        } else {
-          throw Exception("No se pudo guardar el reporte");
-        }
-      } catch (e) {
-        // ignore: avoid_print
-        print("Error al guardar el reporte: $e");
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al guardar: ${e.toString()}'),
-              backgroundColor: AppTheme.errorColor,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              margin: const EdgeInsets.all(16),
-            ),
-          );
-          setState(() {
-            _isSaving = false;
-          });
-        }
-      }
+      // Mostrar confirmación y navegar
+      _showSuccessAndNavigate();
+    } catch (e) {
+      _handleSavingError(e);
     }
   }
 
+  // Procesa los datos del formulario a formato correcto
+  Map<String, dynamic> _processFormData() {
+    final processedData = <String, dynamic>{};
+    
+    // Convertir a tipos correctos según el campo
+    _reportData.forEach((key, value) {
+      if (value == null) {
+        processedData[key] = _getDefaultValueForField(key);
+      } else if (value is String && key != 'referencia') {
+        processedData[key] = _convertToNumericIfPossible(value);
+      } else {
+        processedData[key] = value;
+      }
+    });
+    
+    // Eliminar las novedades para evitar duplicación
+    processedData.remove('novedades');
+    
+    return processedData;
+  }
+
+  // Devuelve valor por defecto según tipo de campo
+  dynamic _getDefaultValueForField(String key) {
+    if (key.contains('produccion') || key.contains('reaccion') || 
+        key.contains('cantidad') || key.contains('densidad')) {
+      return 0.0;
+    }
+    return '';
+  }
+
+  // Intenta convertir string a número si es posible
+  dynamic _convertToNumericIfPossible(String value) {
+    try {
+      return double.parse(value);
+    } catch (e) {
+      return value;
+    }
+  }
+
+  // Crea objeto Report con los datos procesados
+  Report _createReportObject(Map<String, dynamic> processedData) {
+    return Report(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime(
+        _selectedDate.year, 
+        _selectedDate.month, 
+        _selectedDate.day,
+        DateTime.now().hour, 
+        DateTime.now().minute,
+      ),
+      leader: _selectedLeader,
+      shift: _selectedShift,
+      plant: widget.plant,
+      data: processedData,
+      notes: _notesController.text,
+    );
+  }
+
+  // Guarda el reporte en la base de datos
+  Future<void> _saveReportToDatabase(Report report) async {
+    final result = await DatabaseHelper.instance.insertReport(report);
+    
+    if (result <= 0) {
+      throw Exception("No se pudo guardar el reporte");
+    }
+  }
+
+  // Muestra mensaje de éxito y navega de vuelta
+  Future<void> _showSuccessAndNavigate() async {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Reporte guardado correctamente'),
+        backgroundColor: AppTheme.successColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+    
+    // Esperar un momento y navegar
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+    
+    Navigator.pop(context);
+    Navigator.pop(context); // Volver a la pantalla principal
+  }
+
+  // Maneja errores durante el guardado
+  void _handleSavingError(Object e) {
+    // ignore: avoid_print
+    print("Error al guardar el reporte: $e");
+    
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error al guardar: ${e.toString()}'),
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+    
+    setState(() {
+      _isSaving = false;
+    });
+  }
   // Función para obtener icono de la planta
   IconData _getPlantIcon(String id) {
     switch (id) {

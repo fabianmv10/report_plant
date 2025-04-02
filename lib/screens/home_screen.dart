@@ -53,6 +53,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // ignore: avoid-unused-parameters
   Widget _buildNavigationGrid(BuildContext context, {required int crossAxisCount}) {
     final List<Map<String, dynamic>> options = [
       {
@@ -82,8 +83,6 @@ class HomeScreen extends StatelessWidget {
     ];
 
     return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         childAspectRatio: 1,

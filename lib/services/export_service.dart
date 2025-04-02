@@ -13,7 +13,7 @@ class ExportService {
     
     // Crear encabezados
     List<List<dynamic>> rows = [
-      ['ID', 'Fecha', 'Reportado por', 'Turno', 'Planta', 'Datos', 'Novedades']
+      ['ID', 'Fecha', 'Reportado por', 'Turno', 'Planta', 'Datos', 'Novedades'],
     ];
     
     // Agregar datos
@@ -25,7 +25,7 @@ class ExportService {
         report.shift,
         report.plant.name,
         jsonEncode(report.data),
-        report.notes
+        report.notes,
       ]);
     }
     

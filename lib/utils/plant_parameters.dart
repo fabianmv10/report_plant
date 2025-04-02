@@ -1,4 +1,5 @@
-// lib/utils/plant_parameters.dart
+
+
 class PlantParameters {
   /// Obtener los parámetros para una planta específica
   static List<Map<String, dynamic>> getParameters(String plantId) {
@@ -112,7 +113,7 @@ class PlantParameters {
             'Ultrafloc 4002 1150 Kg',
             'Ultrafloc 4010 250 Kg',
             'Ultrafloc 4020 1000 Kg',
-          ], 'has_quantity_in_name': true},
+          ], 'has_quantity_in_name': true,},
           {'name': 'Unidades', 'unit': 'Un', 'min': 0, 'max': 50},
         ];
       default:
@@ -126,6 +127,7 @@ class PlantParameters {
   }
   
   /// Obtener el factor de conversión para una referencia específica
+  // ignore: avoid-unused-parameters
   static double getConversionFactor(String plantId, String reference) {
     // Si la referencia ya tiene la cantidad en el nombre (como "Acido Clorhidrico 200 Kg")
     if (reference.contains(' Kg') || reference.contains(' kg')) {
