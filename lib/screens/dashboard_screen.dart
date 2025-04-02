@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import '../models/report.dart';
 import '../services/database_helper.dart';
+import '../utils/plant_parameters.dart';
 import '../widgets/responsive_layout.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -477,82 +478,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+
   Widget _buildProductionDataList(Report report) {
-    // Verificar si hay valores SATA explícitamente
-    if (report.plant.id == '1') {
-      // Versión simplificada para Sulfato Tipo A
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Referencia
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Referencia:'),
-              Text(
-                report.data['referencia'] != null 
-                  ? report.data['referencia'].toString() 
-                  : 'N/A',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          
-          // Primera reacción
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Producción Stas 1ra Reacción:'),
-              Text(
-                report.data['produccion_stas_1ra_reaccion'] != null 
-                  ? '${report.data['produccion_stas_1ra_reaccion']} un' 
-                  : '0 un',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          
-          // Segunda reacción 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Producción Stas 2da Reacción:'),
-              Text(
-                report.data['produccion_stas_2da_reaccion'] != null 
-                  ? '${report.data['produccion_stas_2da_reaccion']} un' 
-                  : '0 un',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          
-          // Producción líquida
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Producción Líquida:'),
-              Text(
-                report.data['produccion_liquida'] != null 
-                  ? '${report.data['produccion_liquida']} kg' 
-                  : '0 kg',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
+    final parameters = PlantParameters.getParameters(report.plant.id);
+    final parameterMap = {for (var param in parameters) 
+      param['name'].toString().toLowerCase().replaceAll(' ', '_'): param};
     
-    // Para otras plantas, mostrar todos los datos disponibles
     final items = <Widget>[];
+    
     report.data.forEach((key, value) {
       if (value != null) {
+        // Convertir clave a formato legible
         final formattedKey = key.split('_')
             .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
             .join(' ');
+        
+        // Formatear el valor según su tipo
+        String formattedValue;
+        if (value is double) {
+          // Si es un valor con decimales, decidir si mostrar decimales o no
+          if (key.contains('ph') || key.contains('densidad') || 
+              key.contains('solidos') || key.contains('porcent')) {
+            // Mostrar 2 decimales para estos campos específicos
+            formattedValue = value.toStringAsFixed(2);
+          } else {
+            // Para otros campos numéricos, sin decimales
+            formattedValue = value.toStringAsFixed(0);
+          }
+        } else {
+          formattedValue = value.toString();
+        }
+        
+        // Obtener unidad si existe
+        String unit = '';
+        if (parameterMap.containsKey(key) && parameterMap[key]!.containsKey('unit')) {
+          unit = ' ${parameterMap[key]!['unit']}';
+        }
         
         items.add(
           Row(
@@ -560,7 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text('$formattedKey:'),
               Text(
-                value.toString(),
+                '$formattedValue$unit',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
