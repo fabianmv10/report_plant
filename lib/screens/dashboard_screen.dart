@@ -478,7 +478,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-
   Widget _buildProductionDataList(Report report) {
     final parameters = PlantParameters.getParameters(report.plant.id);
     final parameterMap = {for (var param in parameters) 
@@ -540,7 +539,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           )).toList(),
     );
   }
-  
+
   // Método para compartir imágenes
   Future<void> _shareDashboardImage(Uint8List pngBytes, String type) async {
     try {

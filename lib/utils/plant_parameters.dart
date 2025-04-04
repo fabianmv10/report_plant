@@ -6,18 +6,18 @@ class PlantParameters {
     switch (plantId) {
       case '1': // Sulfato de Aluminio Tipo A
         return [
-          {'name': 'Referencia', 'type': 'dropdown', 'options': ['SATA x 25 Kg', 'SATA IF x 25 Kg', 'SATA IF x 1000 Kg'], 'conversion_factor': {'SATA x 25 Kg': 25.0, 'SATA IF x 25 Kg': 25.0, 'SATA IF x 1000 Kg': 1000.0}},
-          {'name': 'Producción STAS 1ra Reacción', 'unit': 'Un', 'min': 0, 'max': 150, 'conversion': 25.0}, // Multiplicador para convertir unidades a kg
-          {'name': 'Producción STAS 2da Reacción', 'unit': 'Un', 'min': 0, 'max': 150, 'conversion': 25.0},
+          {'name': 'Referencia', 'type': 'dropdown', 'options': ['SATA x 25 kg', 'SATA IF x 25 kg', 'SATA IF x 1000 kg']},
+          {'name': 'Producción STAS 1ra Reacción', 'unit': 'kg', 'min': 0, 'max': 3750}, // Multiplicador para convertir unidades a kg
+          {'name': 'Producción STAS 2da Reacción', 'unit': 'kg', 'min': 0, 'max': 3750},
           {'name': 'Producción Liquida', 'unit': 'kg', 'min': 0, 'max': 16000},
         ];
       case '2': // Sulfato de Aluminio Tipo B
         return [
           {'name': 'Reacción de STBS', 'unit': 'Reacción', 'min': 0, 'max': 2},
-          {'name': 'Producción STBS Empaque', 'unit': 'Un', 'min': 0, 'max': 300, 'conversion': 25.0},
+          {'name': 'Producción STBS Empaque', 'unit': 'Un', 'min': 0, 'max': 7500},
           {'name': 'Reacción de STBL', 'unit': 'Reacción', 'min': 0, 'max': 2},
           {'name': 'Decantador de STBL','type': 'dropdown', 'options': ['Decantador 1', 'Decantador 2']},
-          {'name': 'Producción STBL Tanque', 'unit': 'Kg', 'min': 0, 'max': 50000},
+          {'name': 'Producción STBL Tanque', 'unit': 'kg', 'min': 0, 'max': 50000},
           {'name': 'Tanque de STBL','type': 'dropdown', 'options': ['Tanque 1', 'Tanque 2', 'Tanque 3', 'Tanque 4']},
         ];
       case '3': // Banalum
@@ -27,12 +27,12 @@ class PlantParameters {
           {'name': 'Equipo Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
           {'name': 'Tipo Empaque', 'type': 'dropdown', 'options': ['Reacción', 'Recristalización', 'Descunche']},
           {'name': 'Cristalizador Empaque', 'type': 'dropdown', 'options': ['Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
-          {'name': 'Producción Empaque', 'unit': 'Un', 'min': 0, 'max': 250, 'conversion': 25.0},
+          {'name': 'Producción Empaque', 'unit': 'Un', 'min': 0, 'max': 6000},
         ];
       case '4': // Bisulfito de Sodio
         return [
           {'name': 'Estado Producción', 'type': 'dropdown', 'options': ['Sin Producción', 'Preparación','Reacción','Trasiego']},
-          {'name': 'Producción Bisulfito', 'unit': 'Kg', 'min': 0, 'max': 14000},
+          {'name': 'Producción Bisulfito', 'unit': 'kg', 'min': 0, 'max': 14000},
           {'name': 'pH Concentrador 1', 'unit': '', 'min': 4, 'max': 11},
           {'name': 'Densidad Concentrador 1', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
           {'name': 'pH Concentrador 2', 'unit': '', 'min': 4, 'max': 11},
@@ -40,9 +40,9 @@ class PlantParameters {
         ];
       case '5': // Silicatos
         return [
-          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Silicato Sodio P40', 'Silicato Sodio S50','Silicato Potasio K40','Silicato Potasio K47'], 'conversion_factor': {'Silicato Sodio P40': 1250.0, 'Silicato Sodio S50': 1250.0, 'Silicato Potasio K40': 1250.0, 'Silicato Potasio K47': 1250.0}},
+          {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Silicato Sodio P40', 'Silicato Sodio S50','Silicato Potasio K40','Silicato Potasio K47']},
           {'name': 'Reacción de Silicato', 'unit': 'Reacción', 'min': 0, 'max': 2},
-          {'name': 'Producción de Silicato', 'unit': 'Kg', 'min': 0, 'max': 15000},
+          {'name': 'Producción de Silicato', 'unit': 'kg', 'min': 0, 'max': 15000},
           {'name': 'Baume', 'unit': '°Be', 'min': 0, 'max': 55},
           {'name': 'Presión', 'unit': 'psi', 'min': 0, 'max': 150},
         ];
@@ -58,7 +58,7 @@ class PlantParameters {
       case '7': // Polimeros Cationicos
         return [
           {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond 21032', 'Ultrabond 23032','Ultrabond 33005','Ultrafloc 4001/Rapised A','Ultrafloc 4002/Rapised B','Ultrafloc 4010']},
-          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 8000},
+          {'name': 'Producción Polimero', 'unit': 'kg', 'min': 0, 'max': 8000},
           {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
           {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
           {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
@@ -66,7 +66,7 @@ class PlantParameters {
       case '8': // Polimeros Anionicos
         return [
           {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond DC', 'Ultrabond 4010']},
-          {'name': 'Producción Polimero', 'unit': 'Kg', 'min': 0, 'max': 8000},
+          {'name': 'Producción Polimero', 'unit': 'kg', 'min': 0, 'max': 8000},
           {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
           {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
           {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
@@ -74,45 +74,45 @@ class PlantParameters {
       case '9': // Llenados
         return [
           {'name': 'Referencia', 'type': 'dropdown', 'options': [
-            'Acido Clorhidrico 200 Kg',
-            'Acido Clorhidrico 240 Kg',
-            'Acido Fos 34,6% H3PO4 1200 Kg',
+            'Acido Clorhidrico 200 kg',
+            'Acido Clorhidrico 240 kg',
+            'Acido Fos 34,6% H3PO4 1200 kg',
             'Acido Fos 55% H3PO4 250 kg',
             'Acido Fos 85% H3PO4 300 kg',
-            'Acido Sulfurico 200 Kg',
-            'Acido Sulfurico 250 Kg',
-            'Bisulfito de Sodio 250 Kg',
-            'Metasilicato de Sodio 250 Kg',
-            'Rapised 4050 1000 Kg',
-            'Rapised A 250 Kg',
-            'Rapised A 1000 Kg',
-            'Rapised B 250 Kg',
-            'Rapised B 1100 Kg',
-            'Silicato F47 250 Kg',
-            'Silicato K40 250 Kg',
-            'Silicato K40 1250 Kg',
-            'Silicato K47 250 Kg',
-            'Silicato P40 250 Kg',
-            'Silicato P40 1250 Kg',
-            'Silicato S50 250 Kg',
-            'Sulfato Al TA 250 Kg',
-            'Sulfato Al TA 1250 Kg',
-            'Sulfato Al TB 250 Kg',
-            'Sulfato Al TB 1300 Kg',
-            'Ultrabond 21032 1050 Kg Exp',
-            'Ultrabond 23032 1050 Kg Exp',
-            'Ultrabond 4010 1000 Kg',
-            'Ultrafloc 100 250 Kg', 
-            'Ultrafloc 100 1250 Kg',
-            'Ultrafloc 100 1300 Kg',
-            'Ultrafloc 110 250 Kg',
-            'Ultrafloc 110 1250 Kg',
-            'Ultrafloc 200 1200 Kg',
-            'Ultrafloc 300 250 Kg',
-            'Ultrafloc 4002 240 Kg',
-            'Ultrafloc 4002 1150 Kg',
-            'Ultrafloc 4010 250 Kg',
-            'Ultrafloc 4020 1000 Kg',
+            'Acido Sulfurico 200 kg',
+            'Acido Sulfurico 250 kg',
+            'Bisulfito de Sodio 250 kg',
+            'Metasilicato de Sodio 250 kg',
+            'Rapised 4050 1000 kg',
+            'Rapised A 250 kg',
+            'Rapised A 1000 kg',
+            'Rapised B 250 kg',
+            'Rapised B 1100 kg',
+            'Silicato F47 250 kg',
+            'Silicato K40 250 kg',
+            'Silicato K40 1250 kg',
+            'Silicato K47 250 kg',
+            'Silicato P40 250 kg',
+            'Silicato P40 1250 kg',
+            'Silicato S50 250 kg',
+            'Sulfato Al TA 250 kg',
+            'Sulfato Al TA 1250 kg',
+            'Sulfato Al TB 250 kg',
+            'Sulfato Al TB 1300 kg',
+            'Ultrabond 21032 1050 kg Exp',
+            'Ultrabond 23032 1050 kg Exp',
+            'Ultrabond 4010 1000 kg',
+            'Ultrafloc 100 250 kg', 
+            'Ultrafloc 100 1250 kg',
+            'Ultrafloc 100 1300 kg',
+            'Ultrafloc 110 250 kg',
+            'Ultrafloc 110 1250 kg',
+            'Ultrafloc 200 1200 kg',
+            'Ultrafloc 300 250 kg',
+            'Ultrafloc 4002 240 kg',
+            'Ultrafloc 4002 1150 kg',
+            'Ultrafloc 4010 250 kg',
+            'Ultrafloc 4020 1000 kg',
           ], 'has_quantity_in_name': true,},
           {'name': 'Unidades', 'unit': 'Un', 'min': 0, 'max': 50},
         ];
@@ -129,10 +129,10 @@ class PlantParameters {
   /// Obtener el factor de conversión para una referencia específica
   // ignore: avoid-unused-parameters
   static double getConversionFactor(String plantId, String reference) {
-    // Si la referencia ya tiene la cantidad en el nombre (como "Acido Clorhidrico 200 Kg")
-    if (reference.contains(' Kg') || reference.contains(' kg')) {
+    // Si la referencia ya tiene la cantidad en el nombre (como "Acido Clorhidrico 200 kg")
+    if (reference.contains(' kg') || reference.contains(' kg')) {
       try {
-        // Extraer el número antes de "Kg" o "kg"
+        // Extraer el número antes de "kg" o "kg"
         final regexp = RegExp(r'(\d+)\s*[Kk]g');
         final match = regexp.firstMatch(reference);
         if (match != null && match.groupCount >= 1) {
@@ -145,9 +145,9 @@ class PlantParameters {
     
     // Factores de conversión predefinidos para referencias comunes
     final Map<String, double> conversionFactors = {
-      'SATA x 25 Kg': 25.0,
-      'SATA IF x 25 Kg': 25.0,
-      'SATA IF x 1000 Kg': 1000.0,
+      'SATA x 25 kg': 25.0,
+      'SATA IF x 25 kg': 25.0,
+      'SATA IF x 1000 kg': 1000.0,
       'Silicato Sodio P40': 1250.0,
       'Silicato Sodio S50': 1250.0,
       'Silicato Potasio K40': 1250.0,
@@ -218,7 +218,7 @@ class PlantParameters {
     }
   }
   
-  /// Extraer la cantidad de una referencia (por ejemplo, "Acido Clorhidrico 200 Kg" → 200)
+  /// Extraer la cantidad de una referencia (por ejemplo, "Acido Clorhidrico 200 kg" → 200)
   static double extractQuantityFromReference(String reference) {
     try {
       final regexp = RegExp(r'(\d+)\s*[Kk]g');
