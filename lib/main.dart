@@ -13,6 +13,10 @@ void main() async {
   
   const app = MyApp();
   await app._initializeDefaultPlants();
+
+  // Intentar sincronizar reportes pendientes
+  await DatabaseHelper.instance.syncPendingReports();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
