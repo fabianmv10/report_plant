@@ -379,7 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           
           // Turnos para esta planta
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0), // Reducido el padding horizontal
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
             child: Column(
               children: _shifts.map((shift) {
                 final shiftReports = entry.value.where((r) => r.shift == shift).toList();
@@ -394,7 +394,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Widget separado para mostrar información de un turno
   Widget _buildShiftCard(String shift, List<Report> shiftReports) {
     // Colores para los turnos
     final shiftColors = {
@@ -439,13 +438,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Producción:',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 13, // Reducido para mejor ajuste
+                    fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 4),
                 
                 // Datos de producción con mejor formato
-                _buildProductionDataList(report),
+                _buildProductionDataForExport(report),
                 
                 // Novedades si existen
                 const SizedBox(height: 6),
@@ -453,7 +452,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Novedad:',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 13, // Reducido para mejor ajuste
+                    fontSize: 13,
                   ),
                 ),
                 Text(
@@ -477,6 +476,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  // Agrega este nuevo método específico para la exportación
+  Widget _buildProductionDataForExport(Report report) {
+    // Obtener los parámetros específicos para la planta
+    final parameters = PlantParameters.getParameters(report.plant.id);
+    final parameterMap = {for (var param in parameters) 
+      param['name'].toString().toLowerCase().replaceAll(' ', '_'): param};
+    
+    // Lista para almacenar los widgets de datos
+    final items = <Widget>[];
+    
+    // Si no hay datos, mostrar mensaje
+    if (report.data.isEmpty) {
+      return const Text('No hay datos disponibles',
+        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey));
+    }
+    
+    // Iterar sobre cada par clave-valor en los datos del reporte
+    report.data.forEach((key, value) {
+      if (value != null) {
+        // Convertir clave a formato legible
+        final formattedKey = key.split('_')
+            .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+            .join(' ');
+        
+        // Formatear el valor según su tipo
+        String formattedValue;
+        if (value is double) {
+          // Si es un valor con decimales, decidir si mostrar decimales o no
+          if (key.contains('ph') || key.contains('densidad') || 
+              key.contains('solidos') || key.contains('porcent')) {
+            // Mostrar 2 decimales para estos campos específicos
+            formattedValue = value.toStringAsFixed(2);
+          } else {
+            // Para otros campos numéricos, sin decimales
+            formattedValue = value.toStringAsFixed(0);
+          }
+        } else {
+          formattedValue = value.toString();
+        }
+        
+        // Obtener unidad si existe
+        String unit = '';
+        if (parameterMap.containsKey(key) && parameterMap[key]!.containsKey('unit')) {
+          unit = ' ${parameterMap[key]!['unit']}';
+        }
+        
+        // Agregar fila de datos
+        items.add(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$formattedKey:'),
+              Text(
+                '$formattedValue$unit',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        );
+      }
+    });
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items.isEmpty 
+        ? [const Text('No hay datos disponibles', 
+            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))] 
+        : items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: item,
+          )).toList(),
+    );
+  }
+
+
 
   Widget _buildProductionDataList(Report report) {
     final parameters = PlantParameters.getParameters(report.plant.id);

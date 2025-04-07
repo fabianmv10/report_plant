@@ -1,4 +1,6 @@
 // lib/services/database_helper.dart
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
@@ -385,24 +387,68 @@ class DatabaseHelper {
   }
 
   // Exportación
-  Future<bool> exportReportsToCSV() async {
+  Future<String?> exportReportsToCSV() async {
     try {
-      final csvUrl = await _apiService.exportReportsToCSV();
-      return csvUrl != null;
+      // Intentar obtener de la API
+      final csvData = await _apiService.exportReportsToCSV();
+      if (csvData != null) {
+        return csvData;
+      }
+      
+      // Si no se pudo obtener de la API, generar localmente
+      final reports = await _getLocalReports();
+      
+      // Construir el CSV (simplificado)
+      StringBuffer csv = StringBuffer();
+      
+      // Encabezados
+      csv.writeln('ID,Fecha,Líder,Turno,Planta,Notas');
+      
+      // Datos
+      for (var report in reports) {
+        csv.writeln(
+          '${report.id},${report.timestamp.toIso8601String()},${report.leader},'
+          '${report.shift},${report.plant.name},"${report.notes ?? ''}"',
+        );
+      }
+      
+      return csv.toString();
     } catch (e) {
-      return false;
+      print('Error exportando a CSV: $e');
+      return null;
     }
   }
 
-  Future<bool> exportReportsToJSON() async {
+  Future<String?> exportReportsToJSON() async {
     try {
-      final jsonUrl = await _apiService.exportReportsToJSON();
-      return jsonUrl != null;
+      // Intentar obtener de la API
+      final jsonString = await _apiService.exportReportsToJSON();
+      if (jsonString != null) {
+        return jsonString;
+      }
+      
+      // Si no se pudo obtener de la API, generar localmente
+      final reports = await _getLocalReports();
+      
+      // Convertir a JSON
+      List<Map<String, dynamic>> reportsList = reports.map((report) => {
+        'id': report.id,
+        'timestamp': report.timestamp.millisecondsSinceEpoch,
+        'leader': report.leader,
+        'shift': report.shift,
+        'plant_id': report.plant.id,
+        'plant_name': report.plant.name,
+        'data': report.data,
+        'notes': report.notes,
+      }).toList();
+      
+      return jsonEncode(reportsList);
     } catch (e) {
-      return false;
+      print('Error exportando a JSON: $e');
+      return null;
     }
   }
-
+  
   Future close() async {
     final db = await instance.database;
     db.close();

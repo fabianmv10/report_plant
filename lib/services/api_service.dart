@@ -17,7 +17,7 @@ class ApiService {
 
   // Configuración de conexión a MySQL
   final ConnectionSettings settings = ConnectionSettings(
-    host: '192.168.0.114',  // Cambia a la IP de tu computador si conectas desde otro dispositivo
+    host: '192.168.97.192',  // Cambia a la IP de tu computador si conectas desde otro dispositivo
     port: 3306,         // Puerto por defecto de MySQL
     user: 'admin',  // Usuario que creaste para la aplicación
     password: 'pqp2021@',  // Contraseña del usuario
