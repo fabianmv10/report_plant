@@ -16,9 +16,13 @@ class ApiClient {
   // Método para verificar el estado de la API
   Future<bool> checkStatus() async {
     try {
+      print('Intentando conectar a: $baseUrl/status');
       final response = await http.get(
         Uri.parse('$baseUrl/status'),
       ).timeout(timeout);
+      
+      print('Código de respuesta: ${response.statusCode}');
+      print('Cuerpo de respuesta: ${response.body}');
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -26,7 +30,7 @@ class ApiClient {
       }
       return false;
     } catch (e) {
-      print('Error en checkStatus: $e');
+      print('Error detallado en checkStatus: $e');
       return false;
     }
   }

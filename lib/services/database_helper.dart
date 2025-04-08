@@ -511,4 +511,47 @@ class DatabaseHelper {
     final db = await instance.database;
     db.close();
   }
+  
+  Future<Map<String, dynamic>> syncAllData() async {
+    try {
+      // Contar reportes pendientes antes
+      final db = await instance.database;
+      final pendingBefore = Sqflite.firstIntValue(await db.rawQuery(
+        'SELECT COUNT(*) FROM reports WHERE synced = 0',
+      )) ?? 0;
+      
+      // Sincronizar reportes pendientes
+      final success = await syncPendingReports();
+      
+      // Contar reportes pendientes después
+      final pendingAfter = Sqflite.firstIntValue(await db.rawQuery(
+        'SELECT COUNT(*) FROM reports WHERE synced = 0',
+      )) ?? 0;
+      
+      // Actualizar plantas desde el servidor
+      List<Plant> remotePlants = [];
+      bool plantsSuccess = false;
+      
+      try {
+        remotePlants = await _apiClient.getAllPlants();
+        plantsSuccess = remotePlants.isNotEmpty;
+      } catch (e) {
+        plantsSuccess = false;
+      }
+      
+      return {
+        'success': success,
+        'pendingBefore': pendingBefore,
+        'pendingAfter': pendingAfter,
+        'syncedCount': pendingBefore - pendingAfter,
+        'plantsSuccess': plantsSuccess,
+        'plantsCount': remotePlants.length,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
 }

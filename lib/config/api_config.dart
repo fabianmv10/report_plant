@@ -1,7 +1,7 @@
 // lib/config/api_config.dart
 class ApiConfig {
   // URL base de la API
-  static const String baseUrl = 'https://tu-servidor-api.com/api';
+  static const String baseUrl = 'http://192.168.97.192:3000/api';
   
   // Timeouts
   static const int connectTimeout = 10; // segundos
