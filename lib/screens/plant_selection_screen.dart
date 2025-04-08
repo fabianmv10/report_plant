@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import '../models/report.dart';
 import '../services/database_helper.dart';
@@ -27,19 +29,58 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
     });
     
     try {
-      final plants = await DatabaseHelper.instance.getAllPlants();
+      // Primero intentar cargar de la base de datos local
+      final db = await DatabaseHelper.instance.database;
+      final result = await db.query('plants');
+      
+      if (result.isNotEmpty) {
+        setState(() {
+          _plants = result.map((json) => Plant(
+            id: json['id'] as String,
+            name: json['name'] as String,
+          )).toList();
+          _isLoading = false;
+        });
+        return;
+      }
+      
+      // Si no hay plantas en la base de datos local, usar lista predefinida
       setState(() {
-        _plants = plants;
+        _plants = [
+          Plant(id: '1', name: 'Sulfato de Aluminio Tipo A'),
+          Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
+          Plant(id: '3', name: 'Banalum'),
+          Plant(id: '4', name: 'Bisulfito de Sodio'),
+          Plant(id: '5', name: 'Silicatos'),
+          Plant(id: '6', name: 'Policloruro de Aluminio'),
+          Plant(id: '7', name: 'Polímeros Catiónicos'),
+          Plant(id: '8', name: 'Polímeros Aniónicos'),
+          Plant(id: '9', name: 'Llenados'),
+        ];
         _isLoading = false;
       });
     } catch (e) {
+      print('Error al cargar plantas: $e');
+      
+      // En caso de error, cargar la lista predefinida
       setState(() {
+        _plants = [
+          Plant(id: '1', name: 'Sulfato de Aluminio Tipo A'),
+          Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
+          Plant(id: '3', name: 'Banalum'),
+          Plant(id: '4', name: 'Bisulfito de Sodio'),
+          Plant(id: '5', name: 'Silicatos'),
+          Plant(id: '6', name: 'Policloruro de Aluminio'),
+          Plant(id: '7', name: 'Polímeros Catiónicos'),
+          Plant(id: '8', name: 'Polímeros Aniónicos'),
+          Plant(id: '9', name: 'Llenados'),
+        ];
         _isLoading = false;
       });
       _showErrorSnackBar('Error al cargar plantas: $e');
     }
   }
-  
+
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

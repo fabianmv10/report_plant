@@ -3,16 +3,15 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:dio/dio.dart';
-import '../models/report.dart';
-import 'api_service.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import '../models/report.dart';
+import 'api_client.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  final ApiService _apiService = ApiService.instance;
+  final ApiClient _apiClient = ApiClient.instance;
 
   DatabaseHelper._init();
 
@@ -33,6 +32,7 @@ class DatabaseHelper {
       onCreate: _createDB,
     );
   }
+
   //ignore: avoid-unused-parameters
   Future _createDB(Database db, int version) async {
     // Crear tabla de plantas
@@ -64,8 +64,8 @@ class DatabaseHelper {
 
   Future<int> insertPlant(Plant plant) async {
     try {
-      // Intentar insertar en API remota
-      final success = await _apiService.insertPlant(plant);
+      // Intentar insertar en API REST
+      final success = await _apiClient.insertPlant(plant);
       
       // Guardar localmente también (para caché)
       final db = await instance.database;
@@ -80,26 +80,25 @@ class DatabaseHelper {
       
       return success ? 1 : 0;
     } catch (e) {
-      if (e is DioException && e.type == DioExceptionType.connectionTimeout) {
-        // Sin conexión, guardar solo localmente
-        final db = await instance.database;
-        final plantMap = {
-          'id': plant.id,
-          'name': plant.name,
-          'last_synced': 0, // No sincronizado
-        };
-        
-        return await db.insert('plants', plantMap, 
-          conflictAlgorithm: ConflictAlgorithm.replace,);
-      }
-      return -1;
+      print("Error al insertar planta remotamente: $e");
+      
+      // Guardar solo localmente si hay error
+      final db = await instance.database;
+      final plantMap = {
+        'id': plant.id,
+        'name': plant.name,
+        'last_synced': 0, // No sincronizado
+      };
+      
+      return await db.insert('plants', plantMap, 
+        conflictAlgorithm: ConflictAlgorithm.replace,);
     }
   }
 
   Future<List<Plant>> getAllPlants() async {
     try {
-      // Intentar obtener de la API
-      final remotePlants = await _apiService.getAllPlants();
+      // Intentar obtener de la API REST
+      final remotePlants = await _apiClient.getAllPlants();
       
       // Actualizar caché local
       if (remotePlants.isNotEmpty) {
@@ -119,9 +118,33 @@ class DatabaseHelper {
       
       return remotePlants;
     } catch (e) {
+      print('Error al obtener plantas remotas: $e');
+      
       // Si hay error de conexión, obtener desde caché local
       final db = await instance.database;
       final result = await db.query('plants');
+      
+      // Si no hay plantas locales, usar las predeterminadas
+      if (result.isEmpty) {
+        final defaultPlants = [
+          Plant(id: '1', name: 'Sulfato de Aluminio Tipo A'),
+          Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
+          Plant(id: '3', name: 'Banalum'),
+          Plant(id: '4', name: 'Bisulfito de Sodio'),
+          Plant(id: '5', name: 'Silicatos'),
+          Plant(id: '6', name: 'Policloruro de Aluminio'),
+          Plant(id: '7', name: 'Polímeros Catiónicos'),
+          Plant(id: '8', name: 'Polímeros Aniónicos'),
+          Plant(id: '9', name: 'Llenados'),
+        ];
+        
+        // Guardar plantas predeterminadas en la base de datos local
+        for (var plant in defaultPlants) {
+          await insertPlant(plant);
+        }
+        
+        return defaultPlants;
+      }
       
       return result.map((json) => Plant(
         id: json['id'] as String,
@@ -134,28 +157,40 @@ class DatabaseHelper {
 
   Future<int> insertReport(Report report) async {
     try {
-      // Intentar insertar en API remota
-      final success = await _apiService.insertReport(report);
+      // Intentar insertar en API REST
+      final success = await _apiClient.insertReport(report);
       
-      // Guardar localmente también (para caché)
-      final db = await instance.database;
-      final reportMap = {
-        'id': report.id,
-        'timestamp': report.timestamp.millisecondsSinceEpoch,
-        'leader': report.leader,
-        'shift': report.shift,
-        'plant_id': report.plant.id,
-        'data': jsonEncode(report.data),
-        'notes': report.notes,
-        'synced': success ? 1 : 0,
-      };
-      
-      await db.insert('reports', reportMap, 
-        conflictAlgorithm: ConflictAlgorithm.replace,);
-      
-      return success ? 1 : 0;
+      if (success) {
+        // Si se guardó exitosamente, también guardar localmente
+        final db = await instance.database;
+        final reportMap = {
+          'id': report.id,
+          'timestamp': report.timestamp.millisecondsSinceEpoch,
+          'leader': report.leader,
+          'shift': report.shift,
+          'plant_id': report.plant.id,
+          'data': jsonEncode(report.data),
+          'notes': report.notes,
+          'synced': 1, // Marcado como sincronizado
+        };
+        
+        await db.insert('reports', reportMap, 
+          conflictAlgorithm: ConflictAlgorithm.replace,);
+          
+        return 1; // Éxito
+      } else {
+        print("Error al guardar el reporte en el servidor");
+        return _saveReportLocally(report);
+      }
     } catch (e) {
-      // Sin conexión, guardar solo localmente
+      print("Error al guardar reporte remotamente: $e");
+      return _saveReportLocally(report);
+    }
+  }
+
+  // Método auxiliar para guardar reporte localmente
+  Future<int> _saveReportLocally(Report report) async {
+    try {
       final db = await instance.database;
       final reportMap = {
         'id': report.id,
@@ -165,18 +200,21 @@ class DatabaseHelper {
         'plant_id': report.plant.id,
         'data': jsonEncode(report.data),
         'notes': report.notes,
-        'synced': 0,
+        'synced': 0, // No sincronizado
       };
       
       return await db.insert('reports', reportMap, 
         conflictAlgorithm: ConflictAlgorithm.replace,);
+    } catch (e) {
+      print("Error al guardar reporte localmente: $e");
+      return -1;
     }
   }
 
   Future<List<Report>> getAllReports() async {
     try {
-      // Intentar obtener de la API
-      final remoteReports = await _apiService.getAllReports();
+      // Intentar obtener de la API REST
+      final remoteReports = await _apiClient.getAllReports();
       
       // Actualizar caché local
       if (remoteReports.isNotEmpty) {
@@ -185,6 +223,7 @@ class DatabaseHelper {
       
       return remoteReports;
     } catch (e) {
+      print('Error al obtener reportes remotos: $e');
       // Si hay error de conexión, obtener desde caché local
       return _getLocalReports();
     }
@@ -264,17 +303,13 @@ class DatabaseHelper {
 
   Future<List<Report>> getReportsByPlant(String plantId) async {
     try {
-      // Intentar obtener de la API
-      final remoteReports = await _apiService.getReportsByPlant(plantId);
-      
-      // Actualizar caché local
-      if (remoteReports.isNotEmpty) {
-        _updateLocalCache(remoteReports);
-      }
-      
-      return remoteReports;
+      // Intentar obtener todos los reportes y filtrarlos
+      final allReports = await getAllReports();
+      return allReports.where((report) => report.plant.id == plantId).toList();
     } catch (e) {
-      // Si hay error de conexión, obtener desde caché local
+      print('Error al obtener reportes por planta: $e');
+      
+      // Si hay error, obtener desde caché local
       final db = await instance.database;
       
       final results = await db.rawQuery('''
@@ -330,7 +365,11 @@ class DatabaseHelper {
       
       if (results.isEmpty) return true;
       
+      print("Intentando sincronizar ${results.length} reportes pendientes");
+      
       // Sincronizar cada reporte
+      int successCount = 0;
+      
       for (var result in results) {
         // Obtener datos de la planta
         final plantId = result['plant_id'] as String;
@@ -367,21 +406,30 @@ class DatabaseHelper {
         );
         
         // Enviar a la API
-        final success = await _apiService.insertReport(report);
-        
-        // Actualizar estado de sincronización
-        if (success) {
-          await db.update(
-            'reports',
-            {'synced': 1},
-            where: 'id = ?',
-            whereArgs: [report.id],
-          );
+        try {
+          final success = await _apiClient.insertReport(report);
+          
+          // Actualizar estado de sincronización
+          if (success) {
+            await db.update(
+              'reports',
+              {'synced': 1},
+              where: 'id = ?',
+              whereArgs: [report.id],
+            );
+            successCount++;
+            print("Reporte ${report.id} sincronizado exitosamente");
+          }
+        } catch (e) {
+          print("Error al sincronizar reporte ${report.id}: $e");
+          // Continuar con el siguiente reporte
         }
       }
       
+      print("Sincronización completada. $successCount de ${results.length} reportes sincronizados exitosamente");
       return true;
     } catch (e) {
+      print("Error durante la sincronización: $e");
       return false;
     }
   }
@@ -389,16 +437,20 @@ class DatabaseHelper {
   // Exportación
   Future<String?> exportReportsToCSV() async {
     try {
-      // Intentar obtener de la API
-      final csvData = await _apiService.exportReportsToCSV();
-      if (csvData != null) {
-        return csvData;
+      // Obtener todos los reportes (locales y remotos)
+      List<Report> reports = [];
+      
+      try {
+        reports = await getAllReports();
+      } catch (e) {
+        reports = await _getLocalReports();
       }
       
-      // Si no se pudo obtener de la API, generar localmente
-      final reports = await _getLocalReports();
+      if (reports.isEmpty) {
+        return "No hay reportes para exportar";
+      }
       
-      // Construir el CSV (simplificado)
+      // Construir el CSV
       StringBuffer csv = StringBuffer();
       
       // Encabezados
@@ -406,9 +458,11 @@ class DatabaseHelper {
       
       // Datos
       for (var report in reports) {
+        final fecha = "${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}";
+        final notas = report.notes?.replaceAll('"', '""') ?? '';
+        
         csv.writeln(
-          '${report.id},${report.timestamp.toIso8601String()},${report.leader},'
-          '${report.shift},${report.plant.name},"${report.notes ?? ''}"',
+          '${report.id},"$fecha",${report.leader},${report.shift},${report.plant.name},"$notas"',
         );
       }
       
@@ -421,14 +475,18 @@ class DatabaseHelper {
 
   Future<String?> exportReportsToJSON() async {
     try {
-      // Intentar obtener de la API
-      final jsonString = await _apiService.exportReportsToJSON();
-      if (jsonString != null) {
-        return jsonString;
+      // Obtener todos los reportes
+      List<Report> reports = [];
+      
+      try {
+        reports = await getAllReports();
+      } catch (e) {
+        reports = await _getLocalReports();
       }
       
-      // Si no se pudo obtener de la API, generar localmente
-      final reports = await _getLocalReports();
+      if (reports.isEmpty) {
+        return null;
+      }
       
       // Convertir a JSON
       List<Map<String, dynamic>> reportsList = reports.map((report) => {

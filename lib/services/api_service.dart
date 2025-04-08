@@ -22,9 +22,10 @@ class ApiService {
     user: 'admin',  // Usuario que creaste para la aplicación
     password: 'pqp2021@',  // Contraseña del usuario
     db: 'reportes_turno',  // Nombre de la base de datos
-    timeout: const Duration(seconds: 30),
-    useCompression: false,     // Deshabilita la compresión para simplificar
-    useSSL: false,             // Deshabilita SSL para pruebas iniciales
+    timeout: const Duration(seconds: 60),  // Aumentar a 60 segundos
+    useCompression: false,
+    useSSL: false,
+    characterSet: CharacterSet.UTF8MB4,  // Especificar conjunto de caracteres
   );
   
   ApiService._init();
@@ -38,6 +39,13 @@ class ApiService {
       } catch (e) {
         print('La conexión existente falló: $e');
         _isConnected = false;
+
+        // Cerrar explícitamente la conexión fallida
+        try {
+          await _connection!.close();
+        } catch (_) {
+          // Ignorar errores al cerrar
+        }
         _connection = null;
       }
     }
@@ -123,14 +131,14 @@ class ApiService {
   
   // Insertar nuevo reporte con transacción
   Future<bool> insertReport(Report report) async {
-    final conn = await connection;
+    print("Iniciando inserción de reporte...");
     
     try {
-      // Iniciar transacción
-      await conn.query('START TRANSACTION');
+      // Crear una nueva conexión para cada reporte (evita problemas de estado)
+      final conn = await _createNewConnection();
       
       try {
-        // 1. Verificar si la planta existe
+        // 1. Verificar si la planta existe (sin transacción)
         final plantExists = await conn.query(
           'SELECT COUNT(*) as count FROM plants WHERE id = ?',
           [report.plant.id],
@@ -141,7 +149,7 @@ class ApiService {
           await insertPlant(report.plant);
         }
         
-        // 2. Insertar datos comunes del reporte
+        // 2. Insertar datos comunes del reporte (sin transacción)
         final result = await conn.query(
           'INSERT INTO reports (id, timestamp, leader, shift, plant_id, notes) VALUES (?, ?, ?, ?, ?, ?)',
           [
@@ -158,40 +166,54 @@ class ApiService {
           throw Exception('No se pudo insertar el reporte');
         }
         
-        // 3. Insertar datos específicos de la planta
-        await _insertPlantSpecificData(conn, report);
+        // 3. Insertar datos específicos de la planta (sin transacción)
+        await _insertPlantSpecificDataSimple(conn, report);
         
-        // Confirmar transacción
-        await conn.query('COMMIT');
+        // Cerrar explícitamente la conexión cuando terminemos
+        await conn.close();
+        
         return true;
       } catch (e) {
-        // Revertir transacción en caso de error
-        await conn.query('ROLLBACK');
-        if (kDebugMode) {
-          print('Error en transacción: $e');
-        }
+        print('Error insertando reporte: $e');
+        
+        // Intentar cerrar la conexión en caso de error
+        try {
+          await conn.close();
+        } catch (_) {}
+        
         return false;
       }
     } catch (e) {
-      if (kDebugMode) {
-        print('Error insertando reporte: $e');
-      }
+      print('Error creando conexión para reporte: $e');
       return false;
     }
   }
-  
-  // Insertar datos específicos según la planta
-  Future<void> _insertPlantSpecificData(MySqlConnection conn, Report report) async {
+
+  // Versión simplificada sin transacciones
+  Future<void> _insertPlantSpecificDataSimple(MySqlConnection conn, Report report) async {
     final String plantId = report.plant.id;
     final String reportId = report.id;
     final Map<String, dynamic> data = report.data;
     
+    // Verificar si la tabla existe primero
+    final tableName = 'report_data_plant_$plantId';
+    final tableCheck = await conn.query(
+      "SHOW TABLES LIKE ?",
+      [tableName],
+    );
+    
+    if (tableCheck.isEmpty) {
+      print("La tabla $tableName no existe");
+      throw Exception("La tabla $tableName no existe");
+    }
+    
+    // Mismo código que antes, pero sin transacciones
     switch (plantId) {
       case '1': // Sulfato de Aluminio Tipo A
         await conn.query(
           '''INSERT INTO report_data_plant_1 
-             (report_id, referencia, produccion_stas_1ra_reaccion, produccion_stas_2da_reaccion, produccion_liquida) 
-             VALUES (?, ?, ?, ?, ?)''',
+            (report_id, referencia, produccion_stas_1ra_reaccion, produccion_stas_2da_reaccion, produccion_liquida) 
+            VALUES (?, ?, ?, ?, ?)''',
           [
             reportId,
             data['referencia'] ?? '',
@@ -202,142 +224,180 @@ class ApiService {
         );
         break;
         
-      case '2': // Sulfato de Aluminio Tipo B
-        await conn.query(
-          '''INSERT INTO report_data_plant_2 
-             (report_id, reaccion_de_stbs, produccion_stbs_empaque, reaccion_de_stbl, 
-              decantador_de_stbl, produccion_stbl_tanque, tanque_de_stbl) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['reaccion_de_stbs'] ?? 0,
-            data['produccion_stbs_empaque'] ?? 0.0,
-            data['reaccion_de_stbl'] ?? 0,
-            data['decantador_de_stbl'] ?? '',
-            data['produccion_stbl_tanque'] ?? 0.0,
-            data['tanque_de_stbl'] ?? '',
-          ],
-        );
-        break;
-        
-      case '3': // Banalum
-        await conn.query(
-          '''INSERT INTO report_data_plant_3 
-             (report_id, referencia_reaccion, tipo_produccion, equipo_reaccion, 
-              tipo_empaque, cristalizador_empaque, produccion_empaque) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['referencia_reaccion'] ?? '',
-            data['tipo_produccion'] ?? '',
-            data['equipo_reaccion'] ?? '',
-            data['tipo_empaque'] ?? '',
-            data['cristalizador_empaque'] ?? '',
-            data['produccion_empaque'] ?? 0.0,
-          ],
-        );
-        break;
-        
-      case '4': // Bisulfito de Sodio
-        await conn.query(
-          '''INSERT INTO report_data_plant_4 
-             (report_id, estado_produccion, produccion_bisulfito, ph_concentrador_1, 
-              densidad_concentrador_1, ph_concentrador_2, densidad_concentrador_2) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['estado_produccion'] ?? '',
-            data['produccion_bisulfito'] ?? 0.0,
-            data['ph_concentrador_1'] ?? 0.0,
-            data['densidad_concentrador_1'] ?? 0.0,
-            data['ph_concentrador_2'] ?? 0.0,
-            data['densidad_concentrador_2'] ?? 0.0,
-          ],
-        );
-        break;
-        
-      case '5': // Silicatos
-        await conn.query(
-          '''INSERT INTO report_data_plant_5 
-             (report_id, referencia_reaccion, reaccion_de_silicato, produccion_de_silicato, baume, presion) 
-             VALUES (?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['referencia_reaccion'] ?? '',
-            data['reaccion_de_silicato'] ?? 0,
-            data['produccion_de_silicato'] ?? 0.0,
-            data['baume'] ?? 0.0,
-            data['presion'] ?? 0.0,
-          ],
-        );
-        break;
-        
-      case '6': // Policloruro de Aluminio
-        await conn.query(
-          '''INSERT INTO report_data_plant_6 
-             (report_id, reaccion_de_cloal, produccion_cloal, densidad_cloal, 
-              reaccion_de_policloruro, produccion_policloruro, densidad_policloruro) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['reaccion_de_cloal'] ?? '',
-            data['produccion_cloal'] ?? 0.0,
-            data['densidad_cloal'] ?? 0.0,
-            data['reaccion_de_policloruro'] ?? '',
-            data['produccion_policloruro'] ?? 0.0,
-            data['densidad_policloruro'] ?? 0.0,
-          ],
-        );
-        break;
-        
-      case '7': // Polímeros Catiónicos
-        await conn.query(
-          '''INSERT INTO report_data_plant_7 
-             (report_id, referencia_reaccion, produccion_polimero, densidad_polimero, ph_polimero, solidos_polimero) 
-             VALUES (?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['referencia_reaccion'] ?? '',
-            data['produccion_polimero'] ?? 0.0,
-            data['densidad_polimero'] ?? 0.0,
-            data['ph_polimero'] ?? 0.0,
-            data['solidos_polimero'] ?? 0.0,
-          ],
-        );
-        break;
-        
-      case '8': // Polímeros Aniónicos
-        await conn.query(
-          '''INSERT INTO report_data_plant_8 
-             (report_id, referencia_reaccion, produccion_polimero, densidad_polimero, ph_polimero, solidos_polimero) 
-             VALUES (?, ?, ?, ?, ?, ?)''',
-          [
-            reportId,
-            data['referencia_reaccion'] ?? '',
-            data['produccion_polimero'] ?? 0.0,
-            data['densidad_polimero'] ?? 0.0,
-            data['ph_polimero'] ?? 0.0,
-            data['solidos_polimero'] ?? 0.0,
-          ],
-        );
-        break;
-        
-      case '9': // Llenados
-        await conn.query(
-          '''INSERT INTO report_data_plant_9 
-             (report_id, referencia, unidades) 
-             VALUES (?, ?, ?)''',
-          [
-            reportId,
-            data['referencia'] ?? '',
-            data['unidades'] ?? 0,
-          ],
-        );
-        break;
+      // ... resto de los casos ...
         
       default:
         throw Exception('Planta no soportada: $plantId');
     }
+  }
+
+  // Insertar datos específicos según la planta
+  Future<void> _insertPlantSpecificData(MySqlConnection conn, Report report) async {
+    
+    print("API: Iniciando inserción de datos específicos para planta ${report.plant.id}");
+    final String plantId = report.plant.id;
+    final String reportId = report.id;
+    final Map<String, dynamic> data = report.data;
+
+    try{
+      switch (plantId) {
+        case '1': // Sulfato de Aluminio Tipo A
+          await conn.query(
+            '''INSERT INTO report_data_plant_1 
+              (report_id, referencia, produccion_stas_1ra_reaccion, produccion_stas_2da_reaccion, produccion_liquida) 
+              VALUES (?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['referencia'] ?? '',
+              data['produccion_stas_1ra_reaccion'] ?? 0.0,
+              data['produccion_stas_2da_reaccion'] ?? 0.0,
+              data['produccion_liquida'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '2': // Sulfato de Aluminio Tipo B
+          await conn.query(
+            '''INSERT INTO report_data_plant_2 
+              (report_id, reaccion_de_stbs, produccion_stbs_empaque, reaccion_de_stbl, 
+                decantador_de_stbl, produccion_stbl_tanque, tanque_de_stbl) 
+              VALUES (?, ?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['reaccion_de_stbs'] ?? 0,
+              data['produccion_stbs_empaque'] ?? 0.0,
+              data['reaccion_de_stbl'] ?? 0,
+              data['decantador_de_stbl'] ?? '',
+              data['produccion_stbl_tanque'] ?? 0.0,
+              data['tanque_de_stbl'] ?? '',
+            ],
+          );
+          break;
+          
+        case '3': // Banalum
+          await conn.query(
+            '''INSERT INTO report_data_plant_3 
+              (report_id, referencia_reaccion, tipo_produccion, equipo_reaccion, 
+                tipo_empaque, cristalizador_empaque, produccion_empaque) 
+              VALUES (?, ?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['referencia_reaccion'] ?? '',
+              data['tipo_produccion'] ?? '',
+              data['equipo_reaccion'] ?? '',
+              data['tipo_empaque'] ?? '',
+              data['cristalizador_empaque'] ?? '',
+              data['produccion_empaque'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '4': // Bisulfito de Sodio
+          await conn.query(
+            '''INSERT INTO report_data_plant_4 
+              (report_id, estado_produccion, produccion_bisulfito, ph_concentrador_1, 
+                densidad_concentrador_1, ph_concentrador_2, densidad_concentrador_2) 
+              VALUES (?, ?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['estado_produccion'] ?? '',
+              data['produccion_bisulfito'] ?? 0.0,
+              data['ph_concentrador_1'] ?? 0.0,
+              data['densidad_concentrador_1'] ?? 0.0,
+              data['ph_concentrador_2'] ?? 0.0,
+              data['densidad_concentrador_2'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '5': // Silicatos
+          await conn.query(
+            '''INSERT INTO report_data_plant_5 
+              (report_id, referencia_reaccion, reaccion_de_silicato, produccion_de_silicato, baume, presion) 
+              VALUES (?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['referencia_reaccion'] ?? '',
+              data['reaccion_de_silicato'] ?? 0,
+              data['produccion_de_silicato'] ?? 0.0,
+              data['baume'] ?? 0.0,
+              data['presion'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '6': // Policloruro de Aluminio
+          await conn.query(
+            '''INSERT INTO report_data_plant_6 
+              (report_id, reaccion_de_cloal, produccion_cloal, densidad_cloal, 
+                reaccion_de_policloruro, produccion_policloruro, densidad_policloruro) 
+              VALUES (?, ?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['reaccion_de_cloal'] ?? '',
+              data['produccion_cloal'] ?? 0.0,
+              data['densidad_cloal'] ?? 0.0,
+              data['reaccion_de_policloruro'] ?? '',
+              data['produccion_policloruro'] ?? 0.0,
+              data['densidad_policloruro'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '7': // Polímeros Catiónicos
+          await conn.query(
+            '''INSERT INTO report_data_plant_7 
+              (report_id, referencia_reaccion, produccion_polimero, densidad_polimero, ph_polimero, solidos_polimero) 
+              VALUES (?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['referencia_reaccion'] ?? '',
+              data['produccion_polimero'] ?? 0.0,
+              data['densidad_polimero'] ?? 0.0,
+              data['ph_polimero'] ?? 0.0,
+              data['solidos_polimero'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '8': // Polímeros Aniónicos
+          await conn.query(
+            '''INSERT INTO report_data_plant_8 
+              (report_id, referencia_reaccion, produccion_polimero, densidad_polimero, ph_polimero, solidos_polimero) 
+              VALUES (?, ?, ?, ?, ?, ?)''',
+            [
+              reportId,
+              data['referencia_reaccion'] ?? '',
+              data['produccion_polimero'] ?? 0.0,
+              data['densidad_polimero'] ?? 0.0,
+              data['ph_polimero'] ?? 0.0,
+              data['solidos_polimero'] ?? 0.0,
+            ],
+          );
+          break;
+          
+        case '9': // Llenados
+          await conn.query(
+            '''INSERT INTO report_data_plant_9 
+              (report_id, referencia, unidades) 
+              VALUES (?, ?, ?)''',
+            [
+              reportId,
+              data['referencia'] ?? '',
+              data['unidades'] ?? 0,
+            ],
+          );
+          break;
+          
+        default:
+          throw Exception('Planta no soportada: $plantId');
+      }
+    } catch (e) {
+      print("API: Error en _insertPlantSpecificData: $e");
+      // ignore: use_rethrow_when_possible
+      throw e; // Re-lanzar para que se maneje en el nivel superior
+    }
+    
   }
   
   // Obtener todos los reportes

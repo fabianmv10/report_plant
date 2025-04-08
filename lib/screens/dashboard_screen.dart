@@ -490,7 +490,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Si no hay datos, mostrar mensaje
     if (report.data.isEmpty) {
       return const Text('No hay datos disponibles',
-        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey));
+        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),);
     }
     
     // Iterar sobre cada par clave-valor en los datos del reporte
@@ -543,7 +543,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: items.isEmpty 
         ? [const Text('No hay datos disponibles', 
-            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))] 
+            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),)] 
         : items.map((item) => Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: item,
