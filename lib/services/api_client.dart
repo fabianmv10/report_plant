@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/report.dart';
 
@@ -158,6 +159,32 @@ class ApiClient {
     } catch (e) {
       print('❌ Error de conexión: $e');
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> diagnoseConnection() async {
+    try {
+      final statusUrlTest = Uri.parse('$baseUrl/status');
+      final plantsUrlTest = Uri.parse('$baseUrl/plants');
+      
+      print('Probando conexión a: $statusUrlTest');
+      final statusResponse = await http.get(statusUrlTest).timeout(timeout);
+      
+      print('Probando conexión a: $plantsUrlTest');
+      final plantsResponse = await http.get(plantsUrlTest).timeout(timeout);
+      
+      return {
+        'success': true,
+        'statusCode': statusResponse.statusCode,
+        'statusBody': statusResponse.body,
+        'plantsCode': plantsResponse.statusCode,
+        'plantsBodySample': plantsResponse.body.substring(0, min(100, plantsResponse.body.length)),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
     }
   }
 }

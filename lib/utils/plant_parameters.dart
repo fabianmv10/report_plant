@@ -33,10 +33,10 @@ class PlantParameters {
         return [
           {'name': 'Estado Producción', 'type': 'dropdown', 'options': ['Sin Producción', 'Preparación','Reacción','Trasiego']},
           {'name': 'Producción Bisulfito', 'unit': 'kg', 'min': 0, 'max': 14000},
-          {'name': 'pH Concentrador 1', 'unit': '', 'min': 4, 'max': 11},
-          {'name': 'Densidad Concentrador 1', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
-          {'name': 'pH Concentrador 2', 'unit': '', 'min': 4, 'max': 11},
-          {'name': 'Densidad Concentrador 2', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
+          {'name': 'pH Concentrador 1', 'unit': '', 'min': 0, 'max': 14},
+          {'name': 'Densidad Concentrador 1', 'unit': 'gr/mL', 'min': 0, 'max': 1.40},
+          {'name': 'pH Concentrador 2', 'unit': '', 'min': 0, 'max': 14},
+          {'name': 'Densidad Concentrador 2', 'unit': 'gr/mL', 'min': 0, 'max': 1.40},
         ];
       case '5': // Silicatos
         return [
@@ -50,26 +50,26 @@ class PlantParameters {
         return [
           {'name': 'Reacción de CloAl', 'type': 'dropdown', 'options': ['Sin Reacción','Cloruro de Aluminio']},
           {'name': 'Producción CloAl', 'unit': 'kg', 'min': 0, 'max': 6000},
-          {'name': 'Densidad CloAl', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
+          {'name': 'Densidad CloAl', 'unit': 'gr/mL', 'min': 0, 'max': 1.40},
           {'name': 'Reacción de Policloruro', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrafloc 100', 'Ultrafloc 200','Ultrafloc 300']},
           {'name': 'Producción Policloruro', 'unit': 'L', 'min': 0, 'max': 8000},
-          {'name': 'Densidad Policloruro', 'unit': 'gr/mL', 'min': 1.28, 'max': 1.35},
+          {'name': 'Densidad Policloruro', 'unit': 'gr/mL', 'min': 0, 'max': 1.35},
         ];
       case '7': // Polimeros Cationicos
         return [
           {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond 21032', 'Ultrabond 23032','Ultrabond 33005','Ultrafloc 4001/Rapised A','Ultrafloc 4002/Rapised B','Ultrafloc 4010']},
           {'name': 'Producción Polimero', 'unit': 'kg', 'min': 0, 'max': 8000},
-          {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
-          {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
-          {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
+          {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 0, 'max': 1.25},
+          {'name': 'pH Polimero', 'unit': '', 'min': 0, 'max': 7},
+          {'name': 'Solidos Polimero', 'unit': '%', 'min': 0, 'max': 70},
         ];
       case '8': // Polimeros Anionicos
         return [
           {'name': 'Referencia Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrabond DC', 'Ultrabond 4010']},
           {'name': 'Producción Polimero', 'unit': 'kg', 'min': 0, 'max': 8000},
-          {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 1.08, 'max': 1.25},
-          {'name': 'pH Polimero', 'unit': '', 'min': 3, 'max': 7},
-          {'name': 'Solidos Polimero', 'unit': '%', 'min': 30, 'max': 70},
+          {'name': 'Densidad Polimero', 'unit': 'gr/mL', 'min': 0, 'max': 1.25},
+          {'name': 'pH Polimero', 'unit': '', 'min': 0, 'max': 7},
+          {'name': 'Solidos Polimero', 'unit': '%', 'min': 0, 'max': 70},
         ];
       case '9': // Llenados
         return [
