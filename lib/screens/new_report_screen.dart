@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/report.dart';
@@ -123,8 +125,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
             tabletLayout: _buildTabletLayout(),
           ),
     );
-  }
-  
+  } 
   // Indicador de carga durante el guardado
   Widget _buildSavingIndicator() {
     return const Center(
@@ -621,12 +622,21 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     
     // Convertir a tipos correctos según el campo
     _reportData.forEach((key, value) {
+      // Normalizar el nombre del campo: eliminar acentos y caracteres especiales
+      String normalizedKey = key
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ñ', 'n');
+      
       if (value == null) {
-        processedData[key] = _getDefaultValueForField(key);
-      } else if (value is String && key != 'referencia') {
-        processedData[key] = _convertToNumericIfPossible(value);
+        processedData[normalizedKey] = _getDefaultValueForField(key);
+      } else if (value is String && _isNumericField(key)) {
+        processedData[normalizedKey] = _convertToNumericIfPossible(value);
       } else {
-        processedData[key] = value;
+        processedData[normalizedKey] = value;
       }
     });
     
@@ -634,6 +644,18 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     processedData.remove('novedades');
     
     return processedData;
+  }
+
+  bool _isNumericField(String key) {
+    // Identifica campos que deben ser numéricos
+    return key.contains('produccion') || 
+          key.contains('reaccion') || 
+          key.contains('densidad') || 
+          key.contains('ph') || 
+          key.contains('baume') || 
+          key.contains('presion') || 
+          key.contains('solidos') || 
+          key.contains('unidades');
   }
 
   // Devuelve valor por defecto según tipo de campo
@@ -656,7 +678,10 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
 
   // Crea objeto Report con los datos procesados
   Report _createReportObject(Map<String, dynamic> processedData) {
-    return Report(
+    // Depuración
+    print('🏭 Creando reporte para planta: ${widget.plant.id} - ${widget.plant.name}');
+    
+    final report = Report(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: DateTime(
         _selectedDate.year, 
@@ -671,6 +696,17 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
       data: processedData,
       notes: _notesController.text,
     );
+    
+    // Imprimir el objeto completo para verificar
+    print('📋 Objeto Report creado:');
+    print('   ID: ${report.id}');
+    print('   Timestamp: ${report.timestamp}');
+    print('   Leader: ${report.leader}');
+    print('   Shift: ${report.shift}');
+    print('   Plant: ${report.plant.id} - ${report.plant.name}');
+    print('   Notas: ${report.notes}');
+    
+    return report;
   }
 
   // Guarda el reporte en la base de datos
@@ -706,7 +742,6 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
 
   // Maneja errores durante el guardado
   void _handleSavingError(Object e) {
-    // ignore: avoid_print
     print("Error al guardar el reporte: $e");
     
     if (!mounted) return;

@@ -133,20 +133,26 @@ class ApiClient {
         'notes': report.notes,
       };
       
+      print('⚠️ Enviando reporte a API: ${report.id} - Planta: ${report.plant.id}');
+      print('📦 Datos: ${jsonEncode(payload)}');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/reports'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       ).timeout(timeout);
       
+      print('📡 Respuesta de API: ${response.statusCode}');
+      print('📄 Contenido: ${response.body}');
+      
       if (response.statusCode == 201) {
         return true;
       } else {
-        print('Error API: ${response.statusCode} - ${response.body}');
+        print('❌ Error API: ${response.statusCode} - ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Error en insertReport: $e');
+      print('❌ Error de conexión: $e');
       return false;
     }
   }

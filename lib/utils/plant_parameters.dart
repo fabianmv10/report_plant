@@ -14,7 +14,7 @@ class PlantParameters {
       case '2': // Sulfato de Aluminio Tipo B
         return [
           {'name': 'Reacción de STBS', 'unit': 'Reacción', 'min': 0, 'max': 2},
-          {'name': 'Producción STBS Empaque', 'unit': 'Un', 'min': 0, 'max': 7500},
+          {'name': 'Producción STBS Empaque', 'unit': 'kg', 'min': 0, 'max': 7500},
           {'name': 'Reacción de STBL', 'unit': 'Reacción', 'min': 0, 'max': 2},
           {'name': 'Decantador de STBL','type': 'dropdown', 'options': ['Decantador 1', 'Decantador 2']},
           {'name': 'Producción STBL Tanque', 'unit': 'kg', 'min': 0, 'max': 50000},
@@ -26,8 +26,8 @@ class PlantParameters {
           {'name': 'Tipo Producción', 'type': 'dropdown', 'options': ['Sin Reacción','Reacción', 'Recristalización', 'Descunche']},
           {'name': 'Equipo Reacción', 'type': 'dropdown', 'options': ['Sin Reacción','Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
           {'name': 'Tipo Empaque', 'type': 'dropdown', 'options': ['Reacción', 'Recristalización', 'Descunche']},
-          {'name': 'Cristalizador Empaque', 'type': 'dropdown', 'options': ['Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3']},
-          {'name': 'Producción Empaque', 'unit': 'Un', 'min': 0, 'max': 6000},
+          {'name': 'Cristalizador Empaque', 'type': 'dropdown', 'options': ['Cristalizador 1', 'Cristalizador 2', 'Cristalizador 3','Tanque Espesado']},
+          {'name': 'Producción Empaque', 'unit': 'kg', 'min': 0, 'max': 6000},
         ];
       case '4': // Bisulfito de Sodio
         return [
@@ -49,7 +49,7 @@ class PlantParameters {
       case '6': // Policloruro de Aluminio
         return [
           {'name': 'Reacción de CloAl', 'type': 'dropdown', 'options': ['Sin Reacción','Cloruro de Aluminio']},
-          {'name': 'Producción CloAl', 'unit': 'L', 'min': 0, 'max': 6000},
+          {'name': 'Producción CloAl', 'unit': 'kg', 'min': 0, 'max': 6000},
           {'name': 'Densidad CloAl', 'unit': 'gr/mL', 'min': 1.15, 'max': 1.40},
           {'name': 'Reacción de Policloruro', 'type': 'dropdown', 'options': ['Sin Reacción','Ultrafloc 100', 'Ultrafloc 200','Ultrafloc 300']},
           {'name': 'Producción Policloruro', 'unit': 'L', 'min': 0, 'max': 8000},
