@@ -28,18 +28,12 @@ linter:
 # https://dart.dev/guides/language/analysis-options
 
 analyzer:
-  plugins:
-    - dart_code_metrics
-
-dart_code_metrics:
-  metrics:
-    cyclomatic-complexity: 20
-    number-of-parameters: 4
-    maximum-nesting-level: 5
-  rules:
-    - avoid-unused-parameters
-    - no-empty-block
-    - prefer-trailing-comma
-  anti-patterns:
-    - long-method
-    - long-parameter-list
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    invalid_annotation_target: ignore
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
