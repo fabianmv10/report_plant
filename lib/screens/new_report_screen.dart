@@ -1,9 +1,11 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../models/report.dart';
-import '../services/database_helper.dart';
+import '../core/di/injection_container.dart';
+import '../core/utils/logger.dart';
+import '../features/plants/domain/entities/plant.dart';
+import '../features/reports/domain/usecases/create_report.dart';
+import '../features/reports/presentation/bloc/reports_bloc.dart';
 import '../utils/plant_parameters.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/custom_card.dart';
@@ -602,13 +604,10 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     try {
       // Procesar datos del reporte
       final processedData = _processFormData();
-      
-      // Crear objeto de reporte
-      final newReport = _createReportObject(processedData);
-      
-      // Guardar en base de datos
-      await _saveReportToDatabase(newReport);
-      
+
+      // Guardar en base de datos usando el use case
+      await _saveReportToDatabase(processedData);
+
       // Mostrar confirmación y navegar
       _showSuccessAndNavigate();
     } catch (e) {
@@ -676,46 +675,40 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     }
   }
 
-  // Crea objeto Report con los datos procesados
-  Report _createReportObject(Map<String, dynamic> processedData) {
-    // Depuración
-    print('🏭 Creando reporte para planta: ${widget.plant.id} - ${widget.plant.name}');
-    
-    final report = Report(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+  // Guarda el reporte usando el use case
+  Future<void> _saveReportToDatabase(Map<String, dynamic> processedData) async {
+    logger.info('🏭 Creando reporte para planta: ${widget.plant.id} - ${widget.plant.name}');
+
+    final createReport = sl.createReport;
+
+    final result = await createReport(
       timestamp: DateTime(
-        _selectedDate.year, 
-        _selectedDate.month, 
+        _selectedDate.year,
+        _selectedDate.month,
         _selectedDate.day,
-        DateTime.now().hour, 
+        DateTime.now().hour,
         DateTime.now().minute,
       ),
       leader: _selectedLeader,
       shift: _selectedShift,
       plant: widget.plant,
       data: processedData,
-      notes: _notesController.text,
+      notes: _notesController.text.isEmpty ? null : _notesController.text,
     );
-    
-    // Imprimir el objeto completo para verificar
-    print('📋 Objeto Report creado:');
-    print('   ID: ${report.id}');
-    print('   Timestamp: ${report.timestamp}');
-    print('   Leader: ${report.leader}');
-    print('   Shift: ${report.shift}');
-    print('   Plant: ${report.plant.id} - ${report.plant.name}');
-    print('   Notas: ${report.notes}');
-    
-    return report;
-  }
 
-  // Guarda el reporte en la base de datos
-  Future<void> _saveReportToDatabase(Report report) async {
-    final result = await DatabaseHelper.instance.insertReport(report);
-    
-    if (result <= 0) {
-      throw Exception("No se pudo guardar el reporte");
-    }
+    result.fold(
+      (failure) {
+        logger.error('Error al guardar reporte: ${failure.message}');
+        throw Exception(failure.message);
+      },
+      (_) {
+        logger.info('✅ Reporte guardado correctamente');
+        // Refrescar lista de reportes
+        if (mounted) {
+          context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
+        }
+      },
+    );
   }
 
   // Muestra mensaje de éxito y navega de vuelta
@@ -742,7 +735,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
 
   // Maneja errores durante el guardado
   void _handleSavingError(Object e) {
-    print("Error al guardar el reporte: $e");
+    logger.error("Error al guardar el reporte", e);
     
     if (!mounted) return;
     

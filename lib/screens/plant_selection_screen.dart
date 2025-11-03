@@ -1,77 +1,14 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
-import '../models/report.dart';
-import '../services/database_helper.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../features/plants/domain/entities/plant.dart';
+import '../features/plants/presentation/bloc/plants_bloc.dart';
 import '../theme/theme.dart';
+import 'new_report_screen.dart';
 
-class PlantSelectionScreen extends StatefulWidget {
+class PlantSelectionScreen extends StatelessWidget {
   const PlantSelectionScreen({super.key});
 
-  @override
-  State<PlantSelectionScreen> createState() => _PlantSelectionScreenState();
-}
-
-class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
-  bool _isLoading = true;
-  List<Plant> _plants = [];
-  final String _searchQuery = '';
-  
-  @override
-  void initState() {
-    super.initState();
-    _loadPlants();
-  }
-  
-  Future<void> _loadPlants() async {
-    setState(() {
-      _isLoading = true;
-    });
-    
-    try {
-      final plants = await DatabaseHelper.instance.getAllPlants();
-      
-      setState(() {
-        _plants = plants;
-        _isLoading = false;
-      });
-      
-      if (_plants.isEmpty) {
-        _loadDefaultPlants();
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar('Error al cargar plantas: $e');
-      
-      // Cargar plantas predeterminadas en caso de error
-      _loadDefaultPlants();
-    }
-  }
-
-  void _loadDefaultPlants() {
-    final defaultPlants = [
-      Plant(id: '1', name: 'Sulfato de Aluminio Tipo A'),
-      Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
-      Plant(id: '3', name: 'Banalum'),
-      Plant(id: '4', name: 'Bisulfito de Sodio'),
-      Plant(id: '5', name: 'Silicatos'),
-      Plant(id: '6', name: 'Policloruro de Aluminio'),
-      Plant(id: '7', name: 'Polímeros Catiónicos'),
-      Plant(id: '8', name: 'Polímeros Aniónicos'),
-      Plant(id: '9', name: 'Llenados'),
-    ];
-    
-    setState(() {
-      _plants = defaultPlants;
-    });
-    
-    print('🌱 Plantas predeterminadas cargadas: ${_plants.length}');
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
+  void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -105,28 +42,65 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
     }
   }
   
-    @override
+  @override
   Widget build(BuildContext context) {
-    // Filtrar plantas según la búsqueda
-    final filteredPlants = _searchQuery.isEmpty
-        ? _plants
-        : _plants.where((plant) => 
-            plant.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-            
     return Scaffold(
       appBar: AppBar(
         title: const Text('Seleccionar Planta'),
         elevation: 2,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              context.read<PlantsBloc>().add(const PlantsEvent.refreshPlants());
+            },
+          ),
+        ],
       ),
-      body: Column(
+      body: BlocConsumer<PlantsBloc, PlantsState>(
+        listener: (context, state) {
+          state.whenOrNull(
+            error: (message) => _showErrorSnackBar(context, message),
+          );
+        },
+        builder: (context, state) {
+          return state.when(
+            initial: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            loaded: (plants) => plants.isEmpty
+                ? _buildEmptyState()
+                : _buildPlantGrid(plants),
+            error: (message) => _buildErrorState(context, message),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Lista de plantas
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : filteredPlants.isEmpty
-                    ? _buildEmptyState()
-                    : _buildPlantGrid(filteredPlants),
+          const Icon(Icons.error_outline, size: 64, color: AppTheme.errorColor),
+          const SizedBox(height: 16),
+          Text(
+            'Error al cargar plantas',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: AppTheme.textSecondaryColor),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<PlantsBloc>().add(const PlantsEvent.loadPlants());
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Reintentar'),
           ),
         ],
       ),
@@ -182,49 +156,52 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
   Widget _buildPlantCard(Plant plant, Color color, IconData icon) {
     return Card(
       elevation: 4,
-      clipBehavior: Clip.antiAlias, // Esto asegura que el gradiente no sobresalga de las esquinas
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
-        onTap: () {
-          Navigator.pushNamed(
-            context, 
-            '/new_report',
-            arguments: plant,
-          );
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color, color.withOpacity(0.7)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      child: Builder(
+        builder: (context) => InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NewReportScreen(plant: plant),
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color, color.withOpacity(0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 32,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    plant.name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 32,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      plant.name,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
