@@ -1,51 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'models/report.dart';
+import 'core/config/app_config.dart';
+import 'core/di/injection_container.dart';
+import 'core/utils/logger.dart';
+import 'core/widgets/connectivity_banner.dart';
+import 'features/plants/presentation/bloc/plants_bloc.dart';
+import 'features/reports/presentation/bloc/reports_bloc.dart';
 import 'screens/home_screen.dart';
-import 'screens/new_report_screen.dart';
-import 'screens/plant_selection_screen.dart';
-import 'services/database_helper.dart';
 import 'theme/theme.dart';
 import 'theme/theme_provider.dart';
 
+/// Punto de entrada principal de la aplicación
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Necesario para operaciones asíncronas en main
-  
-  //await initializeDefaultPlants();
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // Intentar sincronizar reportes pendientes
-  await DatabaseHelper.instance.syncPendingReports();
+  // Inicializar la aplicación
+  await _initializeApp();
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-  );
-} 
+  runApp(const MyApp());
+}
 
-Future<void> initializeDefaultPlants() async {
-  final plants = [
-    Plant(id: '1', name: 'Sulfato de Aluminio Tipo A'),
-    Plant(id: '2', name: 'Sulfato de Aluminio Tipo B'),
-    Plant(id: '3', name: 'Banalum'),
-    Plant(id: '4', name: 'Bisulfito de Sodio'),
-    Plant(id: '5', name: 'Silicatos'),
-    Plant(id: '6', name: 'Policloruro de Aluminio'),
-    Plant(id: '7', name: 'Polímeros Catiónicos'),
-    Plant(id: '8', name: 'Polímeros Aniónicos'),
-    Plant(id: '9', name: 'Llenados'),
-  ];
-  
-  // Obtener plantas existentes
-  final existingPlants = await DatabaseHelper.instance.getAllPlants();
-  final existingIds = existingPlants.map((p) => p.id).toSet();
+/// Inicializar todos los servicios de la aplicación
+Future<void> _initializeApp() async {
+  try {
+    // 1. Cargar variables de entorno
+    await AppConfig.initialize(envFile: '.env');
+    logger.info('✅ Configuración cargada');
 
-  // Insertar solo las plantas que no existen
-  for (var plant in plants) {
-    if (!existingIds.contains(plant.id)) {
-      await DatabaseHelper.instance.insertPlant(plant);
+    // 2. Inicializar logger
+    logger.initialize();
+    logger.info('✅ Logger inicializado');
+
+    // 3. Inicializar inyección de dependencias
+    await sl.init();
+    logger.info('✅ Dependencias inicializadas');
+
+    // 4. Sincronizar reportes pendientes
+    try {
+      await sl.syncPendingReports();
+      logger.info('✅ Reportes sincronizados');
+    } catch (e) {
+      logger.warning('⚠️ No se pudieron sincronizar reportes', e);
     }
+
+    logger.info('🚀 Aplicación inicializada correctamente');
+  } catch (e, stackTrace) {
+    logger.fatal('❌ Error crítico al inicializar la aplicación', e, stackTrace);
+    rethrow;
   }
 }
 
@@ -54,23 +56,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'Reportes de Turno',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeProvider.themeMode,
-          home: const HomeScreen(),
-          routes: {
-            '/plant_selection': (context) => const PlantSelectionScreen(),
-            '/new_report': (context) => NewReportScreen(
-              plant: ModalRoute.of(context)!.settings.arguments as Plant,
-            ),
+    return MultiBlocProvider(
+      providers: [
+        // Proveer BLoCs globales
+        BlocProvider<PlantsBloc>(
+          create: (_) => sl.plantsBloc..add(const PlantsEvent.loadPlants()),
+        ),
+        BlocProvider<ReportsBloc>(
+          create: (_) => sl.reportsBloc,
+        ),
+      ],
+      child: ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+        child: Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return MaterialApp(
+              title: 'Reportes de Turno',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeProvider.themeMode,
+              home: ConnectivityBanner(
+                networkInfo: sl.networkInfo,
+                child: const HomeScreen(),
+              ),
+            );
           },
-        );
-      },
+        ),
+      ),
     );
   }
 }

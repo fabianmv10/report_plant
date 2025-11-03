@@ -1,70 +1,47 @@
 import 'package:flutter/material.dart';
-import '../models/report.dart';
-import '../services/database_helper.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../features/reports/domain/entities/report.dart';
+import '../features/reports/presentation/bloc/reports_bloc.dart';
+import '../core/di/injection_container.dart' as sl;
+import '../core/utils/logger.dart';
 import '../services/export_service.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/custom_card.dart';
 import '../theme/theme.dart';
 import 'package:intl/intl.dart';
 
-class ReportListScreen extends StatefulWidget {
+class ReportListScreen extends StatelessWidget {
   const ReportListScreen({super.key});
 
   @override
-  State<ReportListScreen> createState() => _ReportListScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider<ReportsBloc>(
+      create: (context) => sl.reportsBloc..add(const ReportsEvent.loadReports()),
+      child: const _ReportListScreenContent(),
+    );
+  }
 }
 
-class _ReportListScreenState extends State<ReportListScreen> {
-  List<Report> _reports = [];
-  bool _isLoading = true;
+class _ReportListScreenContent extends StatefulWidget {
+  const _ReportListScreenContent();
+
+  @override
+  State<_ReportListScreenContent> createState() => _ReportListScreenContentState();
+}
+
+class _ReportListScreenContentState extends State<_ReportListScreenContent> {
   String _searchQuery = '';
-  
+
   // Filtros
   String _filterShift = 'Todos';
   String _filterPlant = 'Todas';
   DateTime? _startDate;
   DateTime? _endDate;
-  
+
   final List<String> _shiftOptions = ['Todos', 'Mañana', 'Tarde', 'Noche'];
   List<String> _plantOptions = ['Todas'];
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
 
-  @override
-  void initState() {
-    super.initState();
-    // Cargar los reportes cuando se inicia la pantalla
-    _loadReports();
-  }
-
-  // Método para cargar los reportes desde la base de datos
-  Future<void> _loadReports() async {
-    setState(() {
-      _isLoading = true;
-    });
-    
-    try {
-      // Cargar todos los reportes
-      final allReports = await DatabaseHelper.instance.getAllReports();
-      
-      // Extraer plantas únicas para los filtros
-      final Set<String> uniquePlants = {'Todas'};
-      for (var report in allReports) {
-        uniquePlants.add(report.plant.name);
-      }
-      _plantOptions = uniquePlants.toList()..sort();
-      
-      setState(() {
-        _reports = allReports;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar('Error al cargar reportes: $e');
-    }
-  }
-  
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -78,19 +55,32 @@ class _ReportListScreenState extends State<ReportListScreen> {
     );
   }
 
+  void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   // Método para aplicar filtros a los reportes
-  List<Report> _getFilteredReports() {
-    return _reports.where((report) {
+  List<Report> _getFilteredReports(List<Report> reports) {
+    return reports.where((report) {
       // Filtrar por turno
       if (_filterShift != 'Todos' && report.shift != _filterShift) {
         return false;
       }
-      
+
       // Filtrar por planta
       if (_filterPlant != 'Todas' && report.plant.name != _filterPlant) {
         return false;
       }
-      
+
       // Filtrar por fecha inicial
       if (_startDate != null) {
         final reportDate = DateTime(
@@ -98,18 +88,18 @@ class _ReportListScreenState extends State<ReportListScreen> {
           report.timestamp.month,
           report.timestamp.day,
         );
-        
+
         final startDateOnly = DateTime(
           _startDate!.year,
           _startDate!.month,
           _startDate!.day,
         );
-        
+
         if (reportDate.isBefore(startDateOnly)) {
           return false;
         }
       }
-      
+
       // Filtrar por fecha final
       if (_endDate != null) {
         final reportDate = DateTime(
@@ -117,18 +107,18 @@ class _ReportListScreenState extends State<ReportListScreen> {
           report.timestamp.month,
           report.timestamp.day,
         );
-        
+
         final endDateOnly = DateTime(
           _endDate!.year,
           _endDate!.month,
           _endDate!.day,
         );
-        
+
         if (reportDate.isAfter(endDateOnly)) {
           return false;
         }
       }
-      
+
       // Filtrar por búsqueda
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
@@ -136,17 +126,27 @@ class _ReportListScreenState extends State<ReportListScreen> {
               report.plant.name.toLowerCase().contains(query) ||
               (report.notes != null && report.notes!.toLowerCase().contains(query));
       }
-      
+
       return true;
     }).toList();
   }
-  
+
+  void _updatePlantOptions(List<Report> reports) {
+    final Set<String> uniquePlants = {'Todas'};
+    for (var report in reports) {
+      uniquePlants.add(report.plant.name);
+    }
+    setState(() {
+      _plantOptions = uniquePlants.toList()..sort();
+    });
+  }
+
   Future<void> _selectDateRange(BuildContext context) async {
     final initialDateRange = DateTimeRange(
       start: _startDate ?? DateTime.now().subtract(const Duration(days: 7)),
       end: _endDate ?? DateTime.now(),
     );
-    
+
     final newDateRange = await showDateRangePicker(
       context: context,
       initialDateRange: initialDateRange,
@@ -166,7 +166,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
         );
       },
     );
-    
+
     if (newDateRange != null) {
       setState(() {
         _startDate = newDateRange.start;
@@ -174,7 +174,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
       });
     }
   }
-  
+
   void _resetFilters() {
     setState(() {
       _filterShift = 'Todos';
@@ -185,12 +185,39 @@ class _ReportListScreenState extends State<ReportListScreen> {
     });
   }
 
+  Future<void> _handleExportToCSV() async {
+    try {
+      await ExportService.exportReportsToCSV();
+      if (mounted) {
+        _showSuccessSnackBar('Reportes exportados a CSV exitosamente');
+      }
+    } catch (e) {
+      logger.error('Error exportando a CSV', e);
+      if (mounted) {
+        _showErrorSnackBar('Error al exportar a CSV: $e');
+      }
+    }
+  }
+
+  Future<void> _handleExportToJSON() async {
+    try {
+      await ExportService.exportReportsToJSON();
+      if (mounted) {
+        _showSuccessSnackBar('Reportes exportados a JSON exitosamente');
+      }
+    } catch (e) {
+      logger.error('Error exportando a JSON', e);
+      if (mounted) {
+        _showErrorSnackBar('Error al exportar a JSON: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filteredReports = _getFilteredReports();
-    final hasActiveFilters = _filterShift != 'Todos' || 
-                          _filterPlant != 'Todas' || 
-                          _startDate != null || 
+    final hasActiveFilters = _filterShift != 'Todos' ||
+                          _filterPlant != 'Todas' ||
+                          _startDate != null ||
                           _endDate != null ||
                           _searchQuery.isNotEmpty;
 
@@ -199,7 +226,9 @@ class _ReportListScreenState extends State<ReportListScreen> {
         onPressed: () async {
           // Navegar a la selección de planta y luego regresar para refrescar
           await Navigator.pushNamed(context, '/plant_selection');
-          _loadReports(); // Refrescar la lista después de regresar
+          if (mounted) {
+            context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
+          }
         },
         tooltip: 'Crear nuevo reporte',
         child: const Icon(Icons.add),
@@ -221,7 +250,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                 onPressed: _resetFilters,
               ),
             ),
-          
+
           IconButton(
             icon: const Icon(Icons.download),
             tooltip: 'Exportar reportes',
@@ -238,7 +267,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                         title: const Text('Exportar como CSV'),
                         onTap: () {
                           Navigator.pop(context);
-                          ExportService.exportReportsToCSV();
+                          _handleExportToCSV();
                         },
                       ),
                       ListTile(
@@ -246,7 +275,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                         title: const Text('Exportar como JSON'),
                         onTap: () {
                           Navigator.pop(context);
-                          ExportService.exportReportsToJSON();
+                          _handleExportToJSON();
                         },
                       ),
                     ],
@@ -257,15 +286,102 @@ class _ReportListScreenState extends State<ReportListScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ResponsiveLayout(
-              mobileLayout: _buildMobileLayout(filteredReports),
-              tabletLayout: _buildTabletLayout(filteredReports),
-            ),
+      body: BlocConsumer<ReportsBloc, ReportsState>(
+        listener: (context, state) {
+          state.whenOrNull(
+            error: (message) => _showErrorSnackBar(message),
+          );
+        },
+        builder: (context, state) {
+          return state.when(
+            initial: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            loaded: (reports, hasReachedMax) {
+              _updatePlantOptions(reports);
+              final filteredReports = _getFilteredReports(reports);
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
+                },
+                child: ResponsiveLayout(
+                  mobileLayout: _buildMobileLayout(filteredReports),
+                  tabletLayout: _buildTabletLayout(filteredReports),
+                ),
+              );
+            },
+            error: (message) => _buildErrorState(context, message),
+            syncing: (reports, syncedCount, totalCount) {
+              _updatePlantOptions(reports);
+              final filteredReports = _getFilteredReports(reports);
+              return Stack(
+                children: [
+                  ResponsiveLayout(
+                    mobileLayout: _buildMobileLayout(filteredReports),
+                    tabletLayout: _buildTabletLayout(filteredReports),
+                  ),
+                  Positioned(
+                    bottom: 16,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(width: 16),
+                              Text('Sincronizando: $syncedCount/$totalCount'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
     );
   }
-   
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 64,
+            color: AppTheme.errorColor,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error al cargar reportes',
+            style: context.textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: context.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.refresh),
+            label: const Text('Reintentar'),
+            onPressed: () {
+              context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMobileLayout(List<Report> reports) {
     return Column(
       children: [
@@ -294,11 +410,11 @@ class _ReportListScreenState extends State<ReportListScreen> {
             },
           ),
         ),
-        
+
         // Chips de filtros activos
         if (_startDate != null || _endDate != null || _filterShift != 'Todos' || _filterPlant != 'Todas')
           _buildActiveFilters(),
-          
+
         // Lista de reportes
         Expanded(
           child: reports.isEmpty
@@ -331,7 +447,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                   style: context.textTheme.titleLarge,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Búsqueda
                 TextField(
                   decoration: InputDecoration(
@@ -350,7 +466,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Filtro por turno
                 Text(
                   'Turno',
@@ -359,7 +475,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                 const SizedBox(height: 8),
                 _buildShiftFilter(),
                 const SizedBox(height: 16),
-                
+
                 // Filtro por planta
                 Text(
                   'Planta',
@@ -368,7 +484,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                 const SizedBox(height: 8),
                 _buildPlantFilter(),
                 const SizedBox(height: 16),
-                
+
                 // Filtro por rango de fechas
                 Text(
                   'Rango de Fechas',
@@ -377,7 +493,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                 const SizedBox(height: 8),
                 _buildDateRangeFilter(context),
                 const SizedBox(height: 24),
-                
+
                 // Botón para limpiar filtros
                 if (_startDate != null || _endDate != null || _filterShift != 'Todos' || _filterPlant != 'Todas' || _searchQuery.isNotEmpty)
                   ElevatedButton.icon(
@@ -389,7 +505,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
             ),
           ),
         ),
-        
+
         // Lista de reportes
         Expanded(
           child: reports.isEmpty
@@ -426,7 +542,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
               onDeleted: () => setState(() => _filterShift = 'Todos'),
               backgroundColor: AppTheme.shiftColors[_filterShift]?.withOpacity(0.2),
             ),
-            
+
           if (_filterPlant != 'Todas')
             Chip(
               label: Text('Planta: $_filterPlant'),
@@ -434,7 +550,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
               onDeleted: () => setState(() => _filterPlant = 'Todas'),
               backgroundColor: context.primaryColor.withOpacity(0.2),
             ),
-            
+
           if (_startDate != null && _endDate != null)
             Chip(
               label: Text('${_dateFormat.format(_startDate!)} - ${_dateFormat.format(_endDate!)}'),
@@ -477,7 +593,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
       ),
     );
   }
-  
+
   Widget _buildPlantFilter() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -505,12 +621,12 @@ class _ReportListScreenState extends State<ReportListScreen> {
       ),
     );
   }
-  
+
   Widget _buildDateRangeFilter(BuildContext context) {
     final String dateRangeText = _startDate != null && _endDate != null
         ? '${_dateFormat.format(_startDate!)} - ${_dateFormat.format(_endDate!)}'
         : 'Seleccionar fechas';
-        
+
     return InkWell(
       onTap: () => _selectDateRange(context),
       child: Container(
@@ -539,7 +655,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
       ),
     );
   }
-  
+
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -700,7 +816,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
     final String dateRangeText = _startDate != null && _endDate != null
         ? '${_dateFormat.format(_startDate!)} - ${_dateFormat.format(_endDate!)}'
         : 'Seleccionar fechas';
-        
+
     return InkWell(
       onTap: () => _selectDateRangeFromSheet(context, sheetSetState),
       child: Container(
@@ -737,14 +853,14 @@ class _ReportListScreenState extends State<ReportListScreen> {
       start: _startDate ?? DateTime.now().subtract(const Duration(days: 7)),
       end: _endDate ?? DateTime.now(),
     );
-    
+
     final newDateRange = await showDateRangePicker(
       context: context,
       initialDateRange: initialDateRange,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
-    
+
     if (newDateRange != null) {
       sheetSetState(() {
         _startDate = newDateRange.start;
@@ -805,7 +921,11 @@ class _ReportListScreenState extends State<ReportListScreen> {
             icon: const Icon(Icons.add),
             label: const Text('Crear nuevo reporte'),
             onPressed: () => Navigator.pushNamed(context, '/plant_selection')
-                .then((_) => _loadReports()),
+                .then((_) {
+                  if (context.mounted) {
+                    context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
+                  }
+                }),
           ),
         ],
       ),
@@ -817,7 +937,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
     final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
     // ignore: unused_local_variable
     final shiftColor = AppTheme.shiftColors[report.shift] ?? Colors.grey[700]!;
-    
+
     return ReportCard(
       title: report.plant.name,
       shift: report.shift,
@@ -832,7 +952,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
     final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
     // ignore: unused_local_variable
     final shiftColor = AppTheme.shiftColors[report.shift] ?? Colors.grey[700]!;
-    
+
     return ReportCard(
       title: report.plant.name,
       shift: report.shift,
@@ -879,7 +999,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
 
   void _showReportDetails(Report report) {
     final shiftColor = AppTheme.shiftColors[report.shift] ?? Colors.grey[700]!;
-    
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -937,7 +1057,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
-                    
+
                     // Parámetros en formato de tabla
                     DataTable(
                       columnSpacing: 16,
@@ -965,7 +1085,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                         ],
                       )).toList(),
                     ),
-                    
+
                     if (report.notes != null && report.notes!.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       const Text(
@@ -1008,11 +1128,11 @@ class _ReportListScreenState extends State<ReportListScreen> {
 
   // Formatea las claves del mapa para mostrarlas
   String _formatKey(String key) {
-    return key.split('_').map((word) => word.isNotEmpty 
-        ? '${word[0].toUpperCase()}${word.substring(1)}' 
+    return key.split('_').map((word) => word.isNotEmpty
+        ? '${word[0].toUpperCase()}${word.substring(1)}'
         : '').join(' ');
   }
-  
+
   // Obtener icono para cada turno
   IconData _getShiftIcon(String shift) {
     switch (shift) {
