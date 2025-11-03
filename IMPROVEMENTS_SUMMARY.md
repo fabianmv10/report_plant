@@ -369,7 +369,13 @@ main_new.dart                               ✅ Nuevo
 
 ### Frontend (Opcional)
 - [ ] Implementar pantallas de autenticación
-- [ ] Refactorizar pantallas existentes para usar BLoCs
+- [x] Refactorizar pantallas existentes para usar BLoCs
+  - [x] lib/main.dart - Migrado
+  - [x] lib/screens/plant_selection_screen.dart - Migrado a PlantsBloc
+  - [x] lib/screens/new_report_screen.dart - Migrado a CreateReport use case
+  - [x] lib/screens/report_list_screen.dart - Migrado a ReportsBloc
+  - [ ] lib/screens/dashboard_screen.dart - Pendiente (si existe)
+  - [ ] lib/screens/settings_screen.dart - Pendiente (si existe)
 - [ ] Implementar refresh tokens
 - [ ] Agregar más tests (objetivo 80% coverage)
 - [ ] Implementar CI/CD pipeline
