@@ -14,18 +14,18 @@ class NetworkInfoImpl implements NetworkInfo {
 
   @override
   Future<bool> get isConnected async {
-    final List<ConnectivityResult> result = await connectivity.checkConnectivity();
-    return result.contains(ConnectivityResult.mobile) ||
-           result.contains(ConnectivityResult.wifi) ||
-           result.contains(ConnectivityResult.ethernet);
+    final ConnectivityResult result = await connectivity.checkConnectivity();
+    return result == ConnectivityResult.mobile ||
+           result == ConnectivityResult.wifi ||
+           result == ConnectivityResult.ethernet;
   }
 
   @override
   Stream<bool> get onConnectivityChanged {
-    return connectivity.onConnectivityChanged.map((results) {
-      return results.contains(ConnectivityResult.mobile) ||
-             results.contains(ConnectivityResult.wifi) ||
-             results.contains(ConnectivityResult.ethernet);
+    return connectivity.onConnectivityChanged.map((ConnectivityResult result) {
+      return result == ConnectivityResult.mobile ||
+             result == ConnectivityResult.wifi ||
+             result == ConnectivityResult.ethernet;
     });
   }
 }
