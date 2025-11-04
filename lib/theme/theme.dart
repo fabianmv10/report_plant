@@ -186,14 +186,14 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith<Color>((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryColorLight.withOpacity(0.5);
+          return primaryColorLight.withValues(alpha: 0.5);
         }
         return Colors.grey.shade300;
       }),
     ),
     tabBarTheme: TabBarThemeData(
       labelColor: textOnPrimaryColor,
-      unselectedLabelColor: textOnPrimaryColor.withOpacity(0.7),
+      unselectedLabelColor: textOnPrimaryColor.withValues(alpha: 0.7),
       indicatorSize: TabBarIndicatorSize.tab,
       indicator: BoxDecoration(
         color: primaryColorDark,
@@ -362,14 +362,14 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith<Color>((states) {
         if (states.contains(WidgetState.selected)) {
-          return darkColorScheme.primary.withOpacity(0.5);
+          return darkColorScheme.primary.withValues(alpha: 0.5);
         }
         return Colors.grey.shade700;
       }),
     ),
     tabBarTheme: TabBarThemeData(
       labelColor: darkColorScheme.onSurface,
-      unselectedLabelColor: darkColorScheme.onSurface.withOpacity(0.7),
+      unselectedLabelColor: darkColorScheme.onSurface.withValues(alpha: 0.7),
       indicatorSize: TabBarIndicatorSize.tab,
       indicator: BoxDecoration(
         color: darkColorScheme.primaryContainer,
@@ -428,7 +428,7 @@ class AppTheme {
       ),
       bodySmall: TextStyle(
         fontSize: 12,
-        color: darkColorScheme.onSurface.withOpacity(0.8),
+        color: darkColorScheme.onSurface.withValues(alpha: 0.8),
       ),
       labelLarge: TextStyle(
         fontSize: 14,
@@ -444,7 +444,7 @@ class AppTheme {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(12),
       gradient: LinearGradient(
-        colors: [plantColor, plantColor.withOpacity(0.7)],
+        colors: [plantColor, plantColor.withValues(alpha: 0.7)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -455,7 +455,7 @@ class AppTheme {
   static BoxDecoration shiftContainerDecoration(String shift) {
     final shiftColor = shiftColors[shift] ?? primaryColor;
     return BoxDecoration(
-      color: shiftColor.withOpacity(0.1),
+      color: shiftColor.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
         color: shiftColor,
@@ -508,7 +508,7 @@ class AppTheme {
   // Sombras
   static List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Colors.black.withValues(alpha: 0.1),
       blurRadius: 6,
       offset: const Offset(0, 3),
     ),

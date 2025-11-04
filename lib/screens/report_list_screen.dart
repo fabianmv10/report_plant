@@ -241,7 +241,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
             Container(
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: context.primaryColor.withOpacity(0.2),
+                color: context.primaryColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -518,7 +518,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
               label: Text('Turno: $_filterShift'),
               deleteIcon: const Icon(Icons.close, size: 16),
               onDeleted: () => setState(() => _filterShift = 'Todos'),
-              backgroundColor: AppTheme.shiftColors[_filterShift]?.withOpacity(0.2),
+              backgroundColor: AppTheme.shiftColors[_filterShift]?.withValues(alpha: 0.2),
             ),
 
           if (_filterPlant != 'Todas')
@@ -526,7 +526,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
               label: Text('Planta: $_filterPlant'),
               deleteIcon: const Icon(Icons.close, size: 16),
               onDeleted: () => setState(() => _filterPlant = 'Todas'),
-              backgroundColor: context.primaryColor.withOpacity(0.2),
+              backgroundColor: context.primaryColor.withValues(alpha: 0.2),
             ),
 
           if (_startDate != null && _endDate != null)
@@ -537,7 +537,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
                 _startDate = null;
                 _endDate = null;
               }),
-              backgroundColor: context.primaryColor.withOpacity(0.2),
+              backgroundColor: context.primaryColor.withValues(alpha: 0.2),
             ),
         ],
       ),
@@ -954,7 +954,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
             '${report.data.length} parámetros',
             style: TextStyle(
               fontSize: 12,
-              color: context.textTheme.bodyMedium?.color?.withOpacity(0.8),
+              color: context.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
             ),
           ),
           if (report.notes != null && report.notes!.isNotEmpty) ...[
@@ -966,7 +966,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
-                color: context.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                color: context.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
               ),
             ),
           ],
@@ -1075,7 +1075,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.grey.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: context.theme.dividerColor),
                         ),

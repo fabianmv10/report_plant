@@ -67,8 +67,8 @@ class _ConnectivityBannerState extends State<ConnectivityBanner> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
+      const SnackBar(
+        content: Row(
           children: [
             Icon(Icons.check_circle, color: Colors.white),
             SizedBox(width: 12),
@@ -76,7 +76,7 @@ class _ConnectivityBannerState extends State<ConnectivityBanner> {
           ],
         ),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
     );

@@ -108,17 +108,17 @@ class PlantSelectionScreen extends StatelessWidget {
   }
   
   Widget _buildEmptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.search_off,
             size: 64,
             color: AppTheme.textHintColor,
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'No hay plantas disponibles',
             style: TextStyle(
               fontSize: 16,
@@ -171,7 +171,7 @@ class PlantSelectionScreen extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [color, color.withOpacity(0.7)],
+                colors: [color, color.withValues(alpha: 0.7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

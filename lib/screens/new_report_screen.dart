@@ -158,7 +158,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [plantColor, plantColor.withOpacity(0.7)],
+                  colors: [plantColor, plantColor.withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -292,7 +292,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [plantColor, plantColor.withOpacity(0.7)],
+                    colors: [plantColor, plantColor.withValues(alpha: 0.7)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -303,7 +303,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -436,7 +436,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
         labelText: 'Reportador',
         border: OutlineInputBorder(),
       ),
-      value: _selectedLeader,
+      initialValue: _selectedLeader,
       onChanged: (String? newValue) {
         setState(() {
           _selectedLeader = newValue!;
@@ -463,7 +463,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
         labelText: 'Turno',
         border: OutlineInputBorder(),
       ),
-      value: _selectedShift,
+      initialValue: _selectedShift,
       onChanged: (String? newValue) {
         setState(() {
           _selectedShift = newValue!;
@@ -508,7 +508,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
               child: Text(option as String),
             );
           }).toList(),
-          value: _reportData[fieldId] as String? ?? (parameter['options'] as List)[0] as String?,
+          initialValue: _reportData[fieldId] as String? ?? (parameter['options'] as List)[0] as String?,
           onChanged: (String? value) {
             setState(() {
               _reportData[fieldId] = value;

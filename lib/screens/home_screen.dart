@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: AppTheme.mediumBorderRadius,
                 gradient: LinearGradient(
-                  colors: [option['color'] as Color, (option['color'] as Color).withOpacity(0.7)],
+                  colors: [option['color'] as Color, (option['color'] as Color).withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
