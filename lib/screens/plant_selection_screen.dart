@@ -161,9 +161,9 @@ class PlantSelectionScreen extends StatelessWidget {
       child: Builder(
         builder: (context) => InkWell(
           onTap: () {
-            Navigator.push(
+            Navigator.push<void>(
               context,
-              MaterialPageRoute(
+              MaterialPageRoute<void>(
                 builder: (context) => NewReportScreen(plant: plant),
               ),
             );

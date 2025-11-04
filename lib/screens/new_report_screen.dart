@@ -726,7 +726,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     );
     
     // Esperar un momento y navegar
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future<void>.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     
     Navigator.pop(context);

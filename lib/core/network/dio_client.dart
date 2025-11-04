@@ -51,7 +51,7 @@ class _LoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onResponse(Response response, ResponseInterceptorHandler handler) {
+  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
     logger.debug(
       '✅ RESPONSE[${response.statusCode}] => ${response.requestOptions.uri}\n'
       'Data: ${response.data}',
