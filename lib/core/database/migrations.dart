@@ -48,19 +48,4 @@ class DatabaseMigrations {
     logger.info('Migración v2 completada');
   }
 
-  /// Ejemplo de migración futura v3
-  static Future<void> _migrationV3(Database db) async {
-    logger.info('Aplicando migración v3');
-
-    // Ejemplo: Agregar tabla de configuraciones
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS settings(
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    ''');
-
-    logger.info('Migración v3 completada');
-  }
 }

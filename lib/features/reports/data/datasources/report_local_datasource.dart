@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/logger.dart';
-import '../../../plants/data/models/plant_model.dart';
 import '../../../plants/domain/entities/plant.dart';
 import '../models/report_model.dart';
 

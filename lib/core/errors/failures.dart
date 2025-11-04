@@ -18,42 +18,35 @@ class ServerFailure extends Failure {
 
 /// Falla de conexión (sin internet, timeout, etc.)
 class ConnectionFailure extends Failure {
-  const ConnectionFailure([String message = 'Error de conexión', int? code])
-      : super(message, code);
+  const ConnectionFailure([super.message = 'Error de conexión', super.code]);
 }
 
 /// Falla de caché/base de datos local
 class CacheFailure extends Failure {
-  const CacheFailure([String message = 'Error de caché local', int? code])
-      : super(message, code);
+  const CacheFailure([super.message = 'Error de caché local', super.code]);
 }
 
 /// Falla de validación (datos inválidos)
 class ValidationFailure extends Failure {
-  const ValidationFailure([String message = 'Datos inválidos', int? code])
-      : super(message, code);
+  const ValidationFailure([super.message = 'Datos inválidos', super.code]);
 }
 
 /// Falla de autenticación
 class AuthFailure extends Failure {
-  const AuthFailure([String message = 'Error de autenticación', int? code])
-      : super(message, code);
+  const AuthFailure([super.message = 'Error de autenticación', super.code]);
 }
 
 /// Falla de autorización (sin permisos)
 class AuthorizationFailure extends Failure {
-  const AuthorizationFailure([String message = 'Sin permisos', int? code])
-      : super(message, code);
+  const AuthorizationFailure([super.message = 'Sin permisos', super.code]);
 }
 
 /// Falla no encontrada (404)
 class NotFoundFailure extends Failure {
-  const NotFoundFailure([String message = 'Recurso no encontrado', int? code])
-      : super(message, code);
+  const NotFoundFailure([super.message = 'Recurso no encontrado', super.code]);
 }
 
 /// Falla desconocida
 class UnknownFailure extends Failure {
-  const UnknownFailure([String message = 'Error desconocido', int? code])
-      : super(message, code);
+  const UnknownFailure([super.message = 'Error desconocido', super.code]);
 }
