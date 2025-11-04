@@ -45,7 +45,7 @@ class ApiClient {
       ).timeout(timeout);
       
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
         return data.map((json) => Plant(
           id: json['id'].toString(),
           name: json['name'].toString(),
@@ -92,27 +92,27 @@ class ApiClient {
       ).timeout(timeout);
       
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
         return data.map((json) {
           final plant = Plant(
             id: json['plant_id'].toString(),
             name: json['plant_name'].toString(),
           );
-          
+
           // Convertir los datos específicos
           Map<String, dynamic> reportData = {};
           if (json['data'] != null) {
-            reportData = Map<String, dynamic>.from(json['data']);
+            reportData = Map<String, dynamic>.from(json['data'] as Map<dynamic, dynamic>);
           }
-          
+
           return Report(
             id: json['id'].toString(),
-            timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
+            timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
             leader: json['leader'].toString(),
             shift: json['shift'].toString(),
             plant: plant,
             data: reportData,
-            notes: json['notes'],
+            notes: json['notes'] as String?,
           );
         }).toList();
       } else {

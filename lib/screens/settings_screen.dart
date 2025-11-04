@@ -242,11 +242,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              result['success'] 
+              (result['success'] as bool? ?? false)
                 ? 'Sincronización completada: ${result['syncedCount']} reporte(s) sincronizado(s)'
                 : 'Error en la sincronización: ${result['error'] ?? "Revise su conexión"}',
             ),
-            backgroundColor: result['success'] ? AppTheme.successColor : AppTheme.errorColor,
+            backgroundColor: (result['success'] as bool? ?? false) ? AppTheme.successColor : AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 3),
           ),

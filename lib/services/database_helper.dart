@@ -284,11 +284,11 @@ class DatabaseHelper {
       // Decodificar los datos JSON
       Map<String, dynamic> reportData;
       try {
-        reportData = jsonDecode(json['data'] as String);
+        reportData = jsonDecode(json['data'] as String) as Map<String, dynamic>;
       } catch (e) {
         reportData = {};
       }
-      
+
       return Report(
         id: json['id'] as String,
         timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
@@ -308,10 +308,10 @@ class DatabaseHelper {
       return allReports.where((report) => report.plant.id == plantId).toList();
     } catch (e) {
       print('Error al obtener reportes por planta: $e');
-      
+
       // Si hay error, obtener desde caché local
       final db = await instance.database;
-      
+
       final results = await db.rawQuery('''
       SELECT r.*, p.name as plant_name
       FROM reports r
@@ -319,7 +319,7 @@ class DatabaseHelper {
       WHERE r.plant_id = ?
       ORDER BY r.timestamp DESC
       ''', [plantId],);
-      
+
       return _processReportResults(results);
     }
   }
@@ -330,11 +330,11 @@ class DatabaseHelper {
         id: json['plant_id'] as String,
         name: json['plant_name'] as String,
       );
-      
+
       // Decodificar los datos JSON
       Map<String, dynamic> reportData;
       try {
-        reportData = jsonDecode(json['data'] as String);
+        reportData = jsonDecode(json['data'] as String) as Map<String, dynamic>;
       } catch (e) {
         reportData = {};
       }
@@ -389,7 +389,7 @@ class DatabaseHelper {
         // Decodificar los datos JSON
         Map<String, dynamic> reportData;
         try {
-          reportData = jsonDecode(result['data'] as String);
+          reportData = jsonDecode(result['data'] as String) as Map<String, dynamic>;
         } catch (e) {
           reportData = {};
         }

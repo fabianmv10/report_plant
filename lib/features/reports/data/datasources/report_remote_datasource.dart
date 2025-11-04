@@ -29,8 +29,8 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => ReportModel.fromJson(json)).toList();
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data.map((json) => ReportModel.fromJson(json as Map<String, dynamic>)).toList();
       } else {
         throw ServerException(
           'Error al obtener reportes',
@@ -56,7 +56,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
       final response = await dioClient.instance.get('/reports/$id');
 
       if (response.statusCode == 200) {
-        return ReportModel.fromJson(response.data);
+        return ReportModel.fromJson(response.data as Map<String, dynamic>);
       } else {
         throw ServerException(
           'Error al obtener reporte',
@@ -86,8 +86,8 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => ReportModel.fromJson(json)).toList();
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data.map((json) => ReportModel.fromJson(json as Map<String, dynamic>)).toList();
       } else {
         throw ServerException(
           'Error al obtener reportes por planta',

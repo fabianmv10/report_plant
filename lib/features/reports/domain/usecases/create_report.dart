@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/report.dart';
 import '../repositories/report_repository.dart';
+import '../../../plants/domain/entities/plant.dart';
 
 /// Caso de uso: Crear un nuevo reporte
 class CreateReport {
@@ -15,7 +16,7 @@ class CreateReport {
     required DateTime timestamp,
     required String leader,
     required String shift,
-    required dynamic plant, // Puede ser Plant de la nueva entidad
+    required Plant plant,
     required Map<String, dynamic> data,
     String? notes,
   }) async {
