@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../features/reports/domain/entities/report.dart';
 import '../features/reports/presentation/bloc/reports_bloc.dart';
-import '../core/di/injection_container.dart' as sl;
+import '../core/di/injection_container.dart';
 import '../core/utils/logger.dart';
 import '../services/export_service.dart';
 import '../widgets/responsive_layout.dart';
@@ -296,7 +296,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
           return state.when(
             initial: () => const Center(child: CircularProgressIndicator()),
             loading: () => const Center(child: CircularProgressIndicator()),
-            loaded: (reports, {hasReachedMax, filteredByPlant}) {
+            loaded: (reports, hasReachedMax, filteredByPlant) {
               _updatePlantOptions(reports);
               final filteredReports = _getFilteredReports(reports);
               return RefreshIndicator(
