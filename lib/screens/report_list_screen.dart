@@ -227,6 +227,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
           // Navegar a la selección de planta y luego regresar para refrescar
           await Navigator.pushNamed(context, '/plant_selection');
           if (mounted) {
+            // ignore: use_build_context_synchronously
             context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
           }
         },
@@ -901,6 +902,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
             onPressed: () => Navigator.pushNamed(context, '/plant_selection')
                 .then((_) {
                   if (context.mounted) {
+                    // ignore: use_build_context_synchronously
                     context.read<ReportsBloc>().add(const ReportsEvent.refreshReports());
                   }
                 }),

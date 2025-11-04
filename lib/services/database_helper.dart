@@ -1,5 +1,5 @@
 // lib/services/database_helper.dart
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, strict_raw_type
 
 import 'dart:async';
 import 'dart:convert';
@@ -33,7 +33,6 @@ class DatabaseHelper {
     );
   }
 
-  //ignore: avoid-unused-parameters
   Future _createDB(Database db, int version) async {
     // Crear tabla de plantas
     await db.execute('''

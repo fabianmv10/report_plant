@@ -504,7 +504,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
           items: (parameter['options'] as List).map<DropdownMenuItem<String>>((option) {
             return DropdownMenuItem<String>(
               value: option as String,
-              child: Text(option as String),
+              child: Text(option),
             );
           }).toList(),
           initialValue: _reportData[fieldId] as String? ?? (parameter['options'] as List)[0] as String?,
