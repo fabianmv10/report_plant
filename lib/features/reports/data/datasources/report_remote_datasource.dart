@@ -23,7 +23,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   @override
   Future<List<ReportModel>> getAllReports({int page = 1, int pageSize = 20}) async {
     try {
-      final response = await dioClient.instance.get(
+      final response = await dioClient.instance.get<dynamic>(
         '/reports',
         queryParameters: {'page': page, 'pageSize': pageSize},
       );
@@ -53,7 +53,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   @override
   Future<ReportModel> getReportById(String id) async {
     try {
-      final response = await dioClient.instance.get('/reports/$id');
+      final response = await dioClient.instance.get<dynamic>('/reports/$id');
 
       if (response.statusCode == 200) {
         return ReportModel.fromJson(response.data as Map<String, dynamic>);
@@ -76,7 +76,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     int pageSize = 20,
   }) async {
     try {
-      final response = await dioClient.instance.get(
+      final response = await dioClient.instance.get<dynamic>(
         '/reports',
         queryParameters: {
           'plantId': plantId,
@@ -103,7 +103,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   @override
   Future<void> insertReport(ReportModel report) async {
     try {
-      final response = await dioClient.instance.post(
+      final response = await dioClient.instance.post<dynamic>(
         '/reports',
         data: report.toJson(),
       );
@@ -123,7 +123,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   @override
   Future<void> updateReport(ReportModel report) async {
     try {
-      final response = await dioClient.instance.put(
+      final response = await dioClient.instance.put<dynamic>(
         '/reports/${report.id}',
         data: report.toJson(),
       );
@@ -143,7 +143,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   @override
   Future<void> deleteReport(String id) async {
     try {
-      final response = await dioClient.instance.delete('/reports/$id');
+      final response = await dioClient.instance.delete<dynamic>('/reports/$id');
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ServerException(

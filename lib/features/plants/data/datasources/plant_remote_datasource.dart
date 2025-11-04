@@ -21,7 +21,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
   @override
   Future<List<PlantModel>> getAllPlants() async {
     try {
-      final response = await dioClient.instance.get('/plants');
+      final response = await dioClient.instance.get<dynamic>('/plants');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List<dynamic>;
@@ -48,7 +48,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
   @override
   Future<PlantModel> getPlantById(String id) async {
     try {
-      final response = await dioClient.instance.get('/plants/$id');
+      final response = await dioClient.instance.get<dynamic>('/plants/$id');
 
       if (response.statusCode == 200) {
         return PlantModel.fromJson(response.data as Map<String, dynamic>);
@@ -67,7 +67,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
   @override
   Future<void> insertPlant(PlantModel plant) async {
     try {
-      final response = await dioClient.instance.post(
+      final response = await dioClient.instance.post<dynamic>(
         '/plants',
         data: plant.toJson(),
       );
@@ -87,7 +87,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
   @override
   Future<void> updatePlant(PlantModel plant) async {
     try {
-      final response = await dioClient.instance.put(
+      final response = await dioClient.instance.put<dynamic>(
         '/plants/${plant.id}',
         data: plant.toJson(),
       );
@@ -107,7 +107,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
   @override
   Future<void> deletePlant(String id) async {
     try {
-      final response = await dioClient.instance.delete('/plants/$id');
+      final response = await dioClient.instance.delete<dynamic>('/plants/$id');
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ServerException(
