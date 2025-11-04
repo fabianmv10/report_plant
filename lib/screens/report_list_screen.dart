@@ -256,7 +256,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
             icon: const Icon(Icons.download),
             tooltip: 'Exportar reportes',
             onPressed: () {
-              showDialog(
+              showDialog<void>(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Exportar Datos'),
@@ -636,7 +636,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
   }
 
   void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -980,7 +980,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
   void _showReportDetails(Report report) {
     final shiftColor = AppTheme.shiftColors[report.shift] ?? Colors.grey[700]!;
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

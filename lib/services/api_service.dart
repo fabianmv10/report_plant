@@ -71,7 +71,7 @@ class ApiService {
           _isConnected = false;
           rethrow;
         }
-        await Future.delayed(Duration(seconds: 2 * _reconnectAttempts)); // Backoff exponencial
+        await Future<void>.delayed(Duration(seconds: 2 * _reconnectAttempts)); // Backoff exponencial
       }
     }
     
