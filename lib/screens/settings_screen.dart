@@ -319,7 +319,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showAboutDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AboutDialog(
         applicationName: 'Reportes de Turno',
