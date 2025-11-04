@@ -33,6 +33,7 @@ void main() {
       final result = await usecase();
 
       // Assert
+      // ignore: inference_failure_on_instance_creation
       expect(result, Right(tPlants));
       verify(mockRepository.getAllPlants());
       verifyNoMoreInteractions(mockRepository);

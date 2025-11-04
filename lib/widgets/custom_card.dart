@@ -59,7 +59,7 @@ class CustomCard extends StatelessWidget {
         borderRadius: AppTheme.mediumBorderRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: elevation,
             offset: Offset(0, elevation / 2),
           ),
@@ -94,14 +94,14 @@ class CustomCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.1),
+        color: accentColor.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
         ),
         border: Border(
           bottom: BorderSide(
-            color: accentColor.withOpacity(0.3),
+            color: accentColor.withValues(alpha: 0.3),
             width: 1,
           ),
         ),

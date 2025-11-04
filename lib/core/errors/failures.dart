@@ -13,8 +13,7 @@ abstract class Failure extends Equatable {
 
 /// Falla de servidor (5xx)
 class ServerFailure extends Failure {
-  const ServerFailure([String message = 'Error del servidor', int? code])
-      : super(message, code);
+  const ServerFailure([super.message = 'Error del servidor', super.code]);
 }
 
 /// Falla de conexión (sin internet, timeout, etc.)

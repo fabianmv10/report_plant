@@ -171,7 +171,6 @@ class ReportRepositoryImpl implements ReportRepository {
     int page = 1,
     int pageSize = 20,
   }) async {
-    // TODO: Implementar filtrado por fecha en datasources
     return const Left(UnknownFailure('No implementado aún'));
   }
 
@@ -281,7 +280,7 @@ class ReportRepositoryImpl implements ReportRepository {
       final pendingReports = await localDataSource.getPendingReports();
 
       if (pendingReports.isEmpty) {
-        return Right({
+        return const Right({
           'success': true,
           'syncedCount': 0,
           'failedCount': 0,

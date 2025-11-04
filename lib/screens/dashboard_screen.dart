@@ -128,6 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showExportDialog(BuildContext context) {
+    // ignore: inference_failure_on_function_invocation
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -218,6 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     try {
       // Esperar a que se renderice el contenido
+      // ignore: inference_failure_on_instance_creation
       await Future.delayed(const Duration(milliseconds: 1500));
       
       // Capturar la imagen
@@ -417,7 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            color: shiftColors[shift]?.withOpacity(0.2),
+            color: shiftColors[shift]?.withValues(alpha: 0.2),
             child: Text(
               'Turno: $shift',
               style: TextStyle(
@@ -866,7 +868,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: shiftColors[shift]?.withOpacity(0.1) ?? Colors.grey[100],
+        color: shiftColors[shift]?.withValues(alpha: 0.1) ?? Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: shiftColors[shift] ?? Colors.grey,

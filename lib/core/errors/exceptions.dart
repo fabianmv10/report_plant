@@ -1,5 +1,3 @@
-/// Excepciones personalizadas para la capa de datos
-
 /// Excepción de servidor
 class ServerException implements Exception {
   final String message;
