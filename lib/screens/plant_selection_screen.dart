@@ -118,11 +118,9 @@ class PlantSelectionScreen extends StatelessWidget {
             color: AppTheme.textHintColor,
           ),
           const SizedBox(height: 16),
-          Text(
-            _searchQuery.isEmpty
-                ? 'No hay plantas disponibles'
-                : 'No se encontraron plantas para "$_searchQuery"',
-            style: const TextStyle(
+          const Text(
+            'No hay plantas disponibles',
+            style: TextStyle(
               fontSize: 16,
               color: AppTheme.textSecondaryColor,
             ),

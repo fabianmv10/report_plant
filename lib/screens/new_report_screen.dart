@@ -109,8 +109,8 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
     for (var param in _parameters) {
       if (param['type'] == 'dropdown') {
         final String fieldId = param['name'].toString().toLowerCase().replaceAll(' ', '_');
-        if (!_reportData.containsKey(fieldId) || 
-            !param['options'].contains(_reportData[fieldId])) {
+        if (!_reportData.containsKey(fieldId) ||
+            !(param['options'] as List).contains(_reportData[fieldId])) {
           // Si el valor actual no es válido, asignar el primer valor por defecto
           _reportData[fieldId] = param['options'][0];
         }
@@ -489,9 +489,9 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
   }
 
   Widget _buildParameterField(Map<String, dynamic> parameter) {
-    final String fieldName = parameter['name'];
+    final String fieldName = parameter['name'] as String;
     final String fieldId = fieldName.toLowerCase().replaceAll(' ', '_');
-    final String type = parameter['type'] ?? 'number';
+    final String type = (parameter['type'] ?? 'number') as String;
     
     // Para campos de tipo dropdown
     if (type == 'dropdown') {
@@ -499,16 +499,16 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
         padding: const EdgeInsets.only(bottom: 16.0),
         child: DropdownButtonFormField<String>(
           decoration: InputDecoration(
-            labelText: parameter['name'],
+            labelText: parameter['name'] as String?,
             border: const OutlineInputBorder(),
           ),
           items: (parameter['options'] as List).map<DropdownMenuItem<String>>((option) {
             return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option),
+              value: option as String,
+              child: Text(option as String),
             );
           }).toList(),
-          value: _reportData[fieldId] ?? parameter['options'][0],
+          value: _reportData[fieldId] as String? ?? (parameter['options'] as List)[0] as String?,
           onChanged: (String? value) {
             setState(() {
               _reportData[fieldId] = value;
@@ -529,10 +529,10 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         decoration: InputDecoration(
-          labelText: '${parameter['name']}',
+          labelText: '${parameter['name'] as String?}',
           border: const OutlineInputBorder(),
-          helperText: 'Rango: ${parameter['min']} - ${parameter['max']}',
-          suffixText: parameter['unit'],
+          helperText: 'Rango: ${parameter['min'] as num} - ${parameter['max'] as num}',
+          suffixText: parameter['unit'] as String?,
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         initialValue: _reportData[fieldId]?.toString() ?? '', // Inicializar con valor existente o vacío
@@ -542,7 +542,7 @@ List<Map<String, dynamic>> _getPlantParameters(String plantId) {
           }
           try {
             final double numValue = double.parse(value);
-            if (numValue < parameter['min'] || numValue > parameter['max']) {
+            if (numValue < (parameter['min'] as num) || numValue > (parameter['max'] as num)) {
               return 'Valor fuera de rango';
             }
           } catch (e) {

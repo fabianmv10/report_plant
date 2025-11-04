@@ -104,7 +104,7 @@ class AppTheme {
         fontWeight: FontWeight.w900,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -191,7 +191,7 @@ class AppTheme {
         return Colors.grey.shade300;
       }),
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: textOnPrimaryColor,
       unselectedLabelColor: textOnPrimaryColor.withOpacity(0.7),
       indicatorSize: TabBarIndicatorSize.tab,
@@ -279,7 +279,7 @@ class AppTheme {
         fontWeight: FontWeight.w900,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -367,7 +367,7 @@ class AppTheme {
         return Colors.grey.shade700;
       }),
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: darkColorScheme.onSurface,
       unselectedLabelColor: darkColorScheme.onSurface.withOpacity(0.7),
       indicatorSize: TabBarIndicatorSize.tab,

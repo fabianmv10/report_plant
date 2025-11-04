@@ -65,13 +65,13 @@ class Report {
   // Crear reporte desde JSON
   factory Report.fromJson(Map<String, dynamic> json, Plant plant) {
     return Report(
-      id: json['id'],
-      timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
-      leader: json['leader'],
-      shift: json['shift'],
+      id: json['id'] as String,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
+      leader: json['leader'] as String,
+      shift: json['shift'] as String,
       plant: plant,
-      data: json['data'],
-      notes: json['notes'],
+      data: json['data'] as Map<String, dynamic>,
+      notes: json['notes'] as String?,
     );
   }
 }

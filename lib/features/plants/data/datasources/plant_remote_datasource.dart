@@ -24,8 +24,8 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
       final response = await dioClient.instance.get('/plants');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => PlantModel.fromJson(json)).toList();
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data.map((json) => PlantModel.fromJson(json as Map<String, dynamic>)).toList();
       } else {
         throw ServerException(
           'Error al obtener plantas',
@@ -51,7 +51,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
       final response = await dioClient.instance.get('/plants/$id');
 
       if (response.statusCode == 200) {
-        return PlantModel.fromJson(response.data);
+        return PlantModel.fromJson(response.data as Map<String, dynamic>);
       } else {
         throw ServerException(
           'Error al obtener planta',

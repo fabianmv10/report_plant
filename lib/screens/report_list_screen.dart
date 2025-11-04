@@ -296,7 +296,7 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
           return state.when(
             initial: () => const Center(child: CircularProgressIndicator()),
             loading: () => const Center(child: CircularProgressIndicator()),
-            loaded: (reports, hasReachedMax) {
+            loaded: (reports, {hasReachedMax, filteredByPlant}) {
               _updatePlantOptions(reports);
               final filteredReports = _getFilteredReports(reports);
               return RefreshIndicator(
@@ -310,38 +310,16 @@ class _ReportListScreenContentState extends State<_ReportListScreenContent> {
               );
             },
             error: (message) => _buildErrorState(context, message),
-            syncing: (reports, syncedCount, totalCount) {
-              _updatePlantOptions(reports);
-              final filteredReports = _getFilteredReports(reports);
-              return Stack(
+            syncing: () => const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ResponsiveLayout(
-                    mobileLayout: _buildMobileLayout(filteredReports),
-                    tabletLayout: _buildTabletLayout(filteredReports),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(width: 16),
-                              Text('Sincronizando: $syncedCount/$totalCount'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Sincronizando reportes...'),
                 ],
-              );
-            },
+              ),
+            ),
           );
         },
       ),

@@ -100,12 +100,12 @@ class HomeScreen extends StatelessWidget {
           ),
           child: InkWell(
             borderRadius: AppTheme.mediumBorderRadius,
-            onTap: () => _navigateTo(context, option['route']),
+            onTap: () => _navigateTo(context, option['route'] as String),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: AppTheme.mediumBorderRadius,
                 gradient: LinearGradient(
-                  colors: [option['color'], option['color'].withOpacity(0.7)],
+                  colors: [option['color'] as Color, (option['color'] as Color).withOpacity(0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -116,13 +116,13 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      option['icon'],
+                      option['icon'] as IconData?,
                       size: 40,
                       color: Colors.white,
                     ),
                     const SizedBox(height: AppTheme.smallSpacing),
                     Text(
-                      option['title'],
+                      option['title'] as String,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 16,
