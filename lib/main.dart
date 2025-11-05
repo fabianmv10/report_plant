@@ -26,10 +26,10 @@ Future<void> _initializeApp() async {
   try {
     // 1. Cargar variables de entorno
     await AppConfig.initialize(envFile: '.env');
-    logger.info('✅ Configuración cargada');
 
-    // 2. Inicializar logger
+    // 2. Inicializar logger PRIMERO antes de usarlo
     logger.initialize();
+    logger.info('✅ Configuración cargada');
     logger.info('✅ Logger inicializado');
 
     // 3. Inicializar inyección de dependencias
